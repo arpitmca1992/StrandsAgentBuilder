@@ -40,14 +40,28 @@ export function ToolNode({ data, selected, id }: NodeProps) {
   };
 
   const isBuiltIn = toolType === 'built-in';
+  const _validationStatus = (data as any)?._validationStatus as 'error' | 'warning' | 'info' | undefined;
+
+  const validationBorderClass = _validationStatus === 'error'
+    ? 'border-red-400 ring-2 ring-red-100'
+    : _validationStatus === 'warning'
+    ? 'border-amber-400 ring-2 ring-amber-100'
+    : '';
 
   return (
     <div className={`
-      rounded-xl border-2 min-w-[150px] transition-all duration-150
+      rounded-xl border-2 min-w-[150px] transition-all duration-150 relative
       ${selected
         ? 'border-orange-500 shadow-xl ring-2 ring-orange-200 bg-white'
-        : 'border-gray-200 hover:border-orange-300 hover:shadow-md bg-white'}
+        : validationBorderClass || 'border-gray-200 hover:border-orange-300 hover:shadow-md bg-white'}
     `}>
+      {_validationStatus && !selected && (
+        <div className={`absolute -top-2 -right-2 w-5 h-5 rounded-full flex items-center justify-center text-white text-[9px] font-bold shadow-sm z-10 ${
+          _validationStatus === 'error' ? 'bg-red-500' : _validationStatus === 'warning' ? 'bg-amber-500' : 'bg-blue-400'
+        }`}>
+          {_validationStatus === 'error' ? '!' : _validationStatus === 'warning' ? '⚠' : 'i'}
+        </div>
+      )}
       <div className="px-3 py-2.5 flex items-center gap-2.5">
         <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-sm ${
           isBuiltIn ? 'bg-orange-50 border border-orange-200' : 'bg-purple-50 border border-purple-200'

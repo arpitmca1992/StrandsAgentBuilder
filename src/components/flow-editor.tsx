@@ -108,6 +108,8 @@ export function FlowEditor({
   const [internalNodes, setInternalNodes, onInternalNodesChange]: [Node[], (nodes: Node[]) => void, OnNodesChange] = useNodesState(initialNodes);
   const [showShortcuts, setShowShortcuts] = useState(false);
   const [connectionError, setConnectionError] = useState<string | null>(null);
+  const [isDragOver, setIsDragOver] = useState(false);
+  const [dragNodeType, setDragNodeType] = useState<string | null>(null);
 
   // Use external nodes if provided, otherwise use internal state
   const nodes = externalNodes || internalNodes;
@@ -204,11 +206,23 @@ export function FlowEditor({
 
   const onPaneClick = useCallback(() => {
     onNodeSelect?.(null);
+    setShowLayoutMenu(false);
   }, [onNodeSelect]);
 
   const onDragOver = useCallback((event: React.DragEvent) => {
     event.preventDefault();
     event.dataTransfer.dropEffect = 'move';
+    setIsDragOver(true);
+    // Try to read the type from the data transfer (available in dragover on some browsers)
+    const types = event.dataTransfer.types;
+    if (types.includes('application/reactflow')) {
+      setDragNodeType('node'); // generic indicator
+    }
+  }, []);
+
+  const onDragLeave = useCallback(() => {
+    setIsDragOver(false);
+    setDragNodeType(null);
   }, []);
 
   /** Create default data for a node type */
@@ -247,6 +261,9 @@ export function FlowEditor({
   const onDrop = useCallback(
     (event: React.DragEvent) => {
       event.preventDefault();
+      setIsDragOver(false);
+      setDragNodeType(null);
+
       if (!reactFlowWrapper.current || !reactFlowInstance) return;
 
       const reactFlowBounds = reactFlowWrapper.current.getBoundingClientRect();
@@ -258,16 +275,25 @@ export function FlowEditor({
         y: event.clientY - reactFlowBounds.top,
       });
 
+      // Snap to grid (20px grid)
+      const snappedPosition = {
+        x: Math.round(position.x / 20) * 20,
+        y: Math.round(position.y / 20) * 20,
+      };
+
       const newNode: Node = {
         id: `${type}_${Date.now()}`,
         type,
-        position,
+        position: snappedPosition,
         data: getDefaultNodeData(type),
       };
 
       setNodes([...nodes, newNode]);
+
+      // Auto-select the new node for immediate configuration
+      onNodeSelect?.(newNode);
     },
-    [reactFlowInstance, setNodes, nodes]
+    [reactFlowInstance, setNodes, nodes, onNodeSelect]
   );
 
   /** Quick-add a node at the center of the current viewport */
@@ -301,11 +327,241 @@ export function FlowEditor({
     }
   }, [nodes, edges, setNodes, externalOnEdgesChange]);
 
+  /** Layout strategies */
+  type LayoutType = 'horizontal' | 'vertical' | 'radial' | 'grid' | 'random';
+
+  const [showLayoutMenu, setShowLayoutMenu] = useState(false);
+
+  /** Compute topological order based on edges (respects flow direction) */
+  const computeNodeLayers = useCallback(() => {
+    // Build adjacency: source → targets
+    const outgoing = new Map<string, string[]>();
+    const incoming = new Map<string, string[]>();
+    const nodeMap = new Map<string, Node>();
+
+    nodes.forEach(n => {
+      nodeMap.set(n.id, n);
+      outgoing.set(n.id, []);
+      incoming.set(n.id, []);
+    });
+
+    edges.forEach(e => {
+      if (nodeMap.has(e.source) && nodeMap.has(e.target)) {
+        outgoing.get(e.source)!.push(e.target);
+        incoming.get(e.target)!.push(e.source);
+      }
+    });
+
+    // Topological sort using Kahn's algorithm (BFS)
+    const inDegree = new Map<string, number>();
+    nodes.forEach(n => inDegree.set(n.id, incoming.get(n.id)!.length));
+
+    const queue: string[] = [];
+    inDegree.forEach((deg, id) => { if (deg === 0) queue.push(id); });
+
+    const layerAssignment = new Map<string, number>();
+    let layer = 0;
+
+    while (queue.length > 0) {
+      const currentBatch = [...queue];
+      queue.length = 0;
+
+      currentBatch.forEach(id => {
+        layerAssignment.set(id, layer);
+        outgoing.get(id)!.forEach(target => {
+          inDegree.set(target, inDegree.get(target)! - 1);
+          if (inDegree.get(target) === 0) {
+            queue.push(target);
+          }
+        });
+      });
+      layer++;
+    }
+
+    // Assign disconnected nodes to layer based on type
+    nodes.forEach(n => {
+      if (!layerAssignment.has(n.id)) {
+        if (n.type === 'input') layerAssignment.set(n.id, 0);
+        else if (n.type === 'output') layerAssignment.set(n.id, layer);
+        else if (n.type === 'tool' || n.type === 'custom-tool' || n.type === 'mcp-tool') layerAssignment.set(n.id, 1);
+        else layerAssignment.set(n.id, Math.floor(layer / 2));
+      }
+    });
+
+    // Group nodes by layer
+    const layers = new Map<number, Node[]>();
+    nodes.forEach(n => {
+      const l = layerAssignment.get(n.id) || 0;
+      if (!layers.has(l)) layers.set(l, []);
+      layers.get(l)!.push(n);
+    });
+
+    return { layers, maxLayer: layer };
+  }, [nodes, edges]);
+
+  /** Apply layout and fit view */
+  const applyLayout = useCallback((positions: Map<string, { x: number; y: number }>) => {
+    setNodes(nodes.map(node => {
+      const pos = positions.get(node.id);
+      return pos ? { ...node, position: pos } : node;
+    }));
+    setTimeout(() => reactFlowInstance?.fitView({ padding: 0.2, duration: 300 }), 50);
+    setShowLayoutMenu(false);
+  }, [nodes, setNodes, reactFlowInstance]);
+
+  /** Horizontal layout: Respects edge direction (left → right) */
+  const layoutHorizontal = useCallback(() => {
+    if (nodes.length === 0) return;
+    const { layers } = computeNodeLayers();
+    const H_GAP = 350, V_GAP = 150, START_X = 80, START_Y = 80;
+    const positions = new Map<string, { x: number; y: number }>();
+
+    const sortedLayers = [...layers.entries()].sort((a, b) => a[0] - b[0]);
+    sortedLayers.forEach(([layerIdx, layerNodes]) => {
+      // Center nodes vertically within each layer
+      const totalHeight = (layerNodes.length - 1) * V_GAP;
+      const offsetY = START_Y + (400 - totalHeight) / 2; // Center around 400px
+      layerNodes.forEach((n, i) => {
+        positions.set(n.id, { x: START_X + layerIdx * H_GAP, y: offsetY + i * V_GAP });
+      });
+    });
+
+    applyLayout(positions);
+  }, [nodes, computeNodeLayers, applyLayout]);
+
+  /** Vertical layout: Respects edge direction (top → bottom) */
+  const layoutVertical = useCallback(() => {
+    if (nodes.length === 0) return;
+    const { layers } = computeNodeLayers();
+    const H_GAP = 280, V_GAP = 200, START_X = 80, START_Y = 60;
+    const positions = new Map<string, { x: number; y: number }>();
+
+    const sortedLayers = [...layers.entries()].sort((a, b) => a[0] - b[0]);
+    sortedLayers.forEach(([layerIdx, layerNodes]) => {
+      const totalWidth = (layerNodes.length - 1) * H_GAP;
+      const offsetX = START_X + (600 - totalWidth) / 2;
+      layerNodes.forEach((n, i) => {
+        positions.set(n.id, { x: offsetX + i * H_GAP, y: START_Y + layerIdx * V_GAP });
+      });
+    });
+
+    applyLayout(positions);
+  }, [nodes, computeNodeLayers, applyLayout]);
+
+  /** Radial layout: Respects direction — sources closer to center */
+  const layoutRadial = useCallback(() => {
+    if (nodes.length === 0) return;
+    const { layers } = computeNodeLayers();
+    const CENTER_X = 450, CENTER_Y = 350;
+    const RING_GAP = 200;
+    const positions = new Map<string, { x: number; y: number }>();
+
+    const sortedLayers = [...layers.entries()].sort((a, b) => a[0] - b[0]);
+    sortedLayers.forEach(([layerIdx, layerNodes]) => {
+      if (layerIdx === 0 && layerNodes.length <= 2) {
+        // First layer (inputs) at center
+        layerNodes.forEach((n, i) => {
+          positions.set(n.id, { x: CENTER_X + i * 80 - (layerNodes.length - 1) * 40, y: CENTER_Y + i * 40 - (layerNodes.length - 1) * 20 });
+        });
+      } else {
+        // Other layers in concentric rings
+        const radius = RING_GAP * layerIdx;
+        layerNodes.forEach((n, i) => {
+          const angle = (i / layerNodes.length) * Math.PI * 2 - Math.PI / 2;
+          positions.set(n.id, {
+            x: CENTER_X + Math.cos(angle) * radius,
+            y: CENTER_Y + Math.sin(angle) * radius,
+          });
+        });
+      }
+    });
+
+    applyLayout(positions);
+  }, [nodes, computeNodeLayers, applyLayout]);
+
+  /** Grid layout: Ordered by topological layer, then within layer */
+  const layoutGrid = useCallback(() => {
+    if (nodes.length === 0) return;
+    const { layers } = computeNodeLayers();
+    const CELL_W = 300, CELL_H = 200, START = 60;
+    const positions = new Map<string, { x: number; y: number }>();
+
+    // Flatten in topological order
+    const sortedLayers = [...layers.entries()].sort((a, b) => a[0] - b[0]);
+    const orderedNodes: Node[] = [];
+    sortedLayers.forEach(([, layerNodes]) => orderedNodes.push(...layerNodes));
+
+    const cols = Math.ceil(Math.sqrt(orderedNodes.length));
+    orderedNodes.forEach((node, i) => {
+      const col = i % cols;
+      const row = Math.floor(i / cols);
+      positions.set(node.id, { x: START + col * CELL_W, y: START + row * CELL_H });
+    });
+
+    applyLayout(positions);
+  }, [nodes, computeNodeLayers, applyLayout]);
+
+  /** Random layout: Respects flow direction — sources always left/above targets */
+  const layoutRandom = useCallback(() => {
+    if (nodes.length === 0) return;
+    const { layers } = computeNodeLayers();
+    const positions = new Map<string, { x: number; y: number }>();
+
+    const sortedLayers = [...layers.entries()].sort((a, b) => a[0] - b[0]);
+    const LAYER_WIDTH = 300;
+
+    sortedLayers.forEach(([layerIdx, layerNodes]) => {
+      // Random position WITHIN the layer's horizontal band (preserves direction)
+      const baseX = 80 + layerIdx * LAYER_WIDTH;
+      layerNodes.forEach((n) => {
+        positions.set(n.id, {
+          x: baseX + Math.random() * (LAYER_WIDTH * 0.6),
+          y: 80 + Math.random() * 500,
+        });
+      });
+    });
+
+    applyLayout(positions);
+  }, [nodes, computeNodeLayers, applyLayout]);
+
+  /** Execute a layout by type */
+  const handleLayout = useCallback((type: LayoutType) => {
+    switch (type) {
+      case 'horizontal': layoutHorizontal(); break;
+      case 'vertical': layoutVertical(); break;
+      case 'radial': layoutRadial(); break;
+      case 'grid': layoutGrid(); break;
+      case 'random': layoutRandom(); break;
+    }
+  }, [layoutHorizontal, layoutVertical, layoutRadial, layoutGrid, layoutRandom]);
+
+  /** Fit all nodes into view */
+  const handleFitView = useCallback(() => {
+    reactFlowInstance?.fitView({ padding: 0.2, duration: 300 });
+  }, [reactFlowInstance]);
+
   return (
     <div className={`h-full w-full ${className} relative`} ref={reactFlowWrapper}>
+      {/* Drop Zone Indicator */}
+      {isDragOver && (
+        <div className="absolute inset-0 z-40 pointer-events-none">
+          <div className="absolute inset-2 border-2 border-dashed border-indigo-400 rounded-2xl bg-indigo-50/20 flex items-center justify-center transition-all duration-200">
+            <div className="bg-white/90 backdrop-blur-sm px-6 py-3 rounded-xl shadow-lg border border-indigo-200 flex items-center gap-3">
+              <div className="w-8 h-8 rounded-lg bg-indigo-100 flex items-center justify-center">
+                <Bot className="w-4 h-4 text-indigo-600" />
+              </div>
+              <div>
+                <p className="text-sm font-medium text-indigo-800">Drop here to add node</p>
+                <p className="text-[10px] text-indigo-500">Snaps to grid automatically</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Connection Error Toast */}
       {connectionError && (
-        <div className="absolute top-4 left-1/2 -translate-x-1/2 z-50 animate-in fade-in slide-in-from-top-2">
+        <div className="absolute top-4 left-1/2 -translate-x-1/2 z-50">
           <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-2 rounded-lg shadow-lg flex items-center gap-2 text-sm">
             <X className="w-3.5 h-3.5 cursor-pointer hover:text-red-900" onClick={() => setConnectionError(null)} />
             {connectionError}
@@ -313,25 +569,100 @@ export function FlowEditor({
         </div>
       )}
 
-      {/* Graph Mode Toggle */}
-      <div className="absolute top-4 right-4 z-10 bg-white rounded-lg shadow-lg px-4 py-2 flex items-center space-x-3 border border-gray-200">
-        <Network className={`w-4 h-4 ${graphMode ? 'text-purple-600' : 'text-gray-400'}`} />
-        <span className="text-sm font-medium text-gray-700">Graph Mode</span>
-        <button
-          onClick={() => onGraphModeChange?.(!graphMode)}
-          className={`
-            relative inline-flex h-6 w-11 items-center rounded-full transition-colors
-            ${graphMode ? 'bg-purple-600' : 'bg-gray-300'}
-          `}
-          title="Toggle Graph Mode: Enable DAG-based multi-agent orchestration"
-        >
-          <span
-            className={`
-              inline-block h-4 w-4 transform rounded-full bg-white transition-transform shadow
-              ${graphMode ? 'translate-x-6' : 'translate-x-1'}
-            `}
-          />
-        </button>
+      {/* Top Toolbar — Layout, Fit View, Graph Mode */}
+      <div className="absolute top-3 right-3 z-10 flex items-center gap-2">
+        {/* Layout tools */}
+        <div className="bg-white rounded-lg shadow-md border border-gray-200 flex items-center divide-x divide-gray-200 relative">
+          <button
+            onClick={() => setShowLayoutMenu(!showLayoutMenu)}
+            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-gray-600 hover:text-indigo-600 hover:bg-indigo-50 rounded-l-lg transition-colors"
+            title="Choose layout arrangement"
+          >
+            <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <rect x="3" y="3" width="7" height="7" /><rect x="14" y="3" width="7" height="7" /><rect x="3" y="14" width="7" height="7" /><rect x="14" y="14" width="7" height="7" />
+            </svg>
+            Layout ▾
+          </button>
+          <button
+            onClick={handleFitView}
+            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-r-lg transition-colors"
+            title="Fit all nodes into view"
+          >
+            <Maximize2 className="w-3.5 h-3.5" />
+            Fit
+          </button>
+
+          {/* Layout Dropdown Menu */}
+          {showLayoutMenu && (
+            <div className="absolute top-full left-0 mt-1 w-52 bg-white rounded-lg shadow-xl border border-gray-200 py-1 z-50">
+              <p className="px-3 py-1 text-[10px] text-gray-400 font-semibold uppercase tracking-wider">Arrange Layout</p>
+              <button
+                onClick={() => handleLayout('horizontal')}
+                className="w-full flex items-center gap-2.5 px-3 py-2 text-xs text-gray-700 hover:bg-indigo-50 hover:text-indigo-700 transition-colors text-left"
+              >
+                <span className="text-base">→</span>
+                <div>
+                  <p className="font-medium">Horizontal (DAG)</p>
+                  <p className="text-[10px] text-gray-400">Input → Agents → Output</p>
+                </div>
+              </button>
+              <button
+                onClick={() => handleLayout('vertical')}
+                className="w-full flex items-center gap-2.5 px-3 py-2 text-xs text-gray-700 hover:bg-indigo-50 hover:text-indigo-700 transition-colors text-left"
+              >
+                <span className="text-base">↓</span>
+                <div>
+                  <p className="font-medium">Vertical (Top-Down)</p>
+                  <p className="text-[10px] text-gray-400">Flows from top to bottom</p>
+                </div>
+              </button>
+              <button
+                onClick={() => handleLayout('radial')}
+                className="w-full flex items-center gap-2.5 px-3 py-2 text-xs text-gray-700 hover:bg-indigo-50 hover:text-indigo-700 transition-colors text-left"
+              >
+                <span className="text-base">◎</span>
+                <div>
+                  <p className="font-medium">Radial (Star)</p>
+                  <p className="text-[10px] text-gray-400">Agents center, tools around</p>
+                </div>
+              </button>
+              <button
+                onClick={() => handleLayout('grid')}
+                className="w-full flex items-center gap-2.5 px-3 py-2 text-xs text-gray-700 hover:bg-indigo-50 hover:text-indigo-700 transition-colors text-left"
+              >
+                <span className="text-base">⊞</span>
+                <div>
+                  <p className="font-medium">Grid</p>
+                  <p className="text-[10px] text-gray-400">Uniform rows and columns</p>
+                </div>
+              </button>
+              <div className="border-t border-gray-100 my-1" />
+              <button
+                onClick={() => handleLayout('random')}
+                className="w-full flex items-center gap-2.5 px-3 py-2 text-xs text-gray-700 hover:bg-pink-50 hover:text-pink-700 transition-colors text-left"
+              >
+                <span className="text-base">🎲</span>
+                <div>
+                  <p className="font-medium">Shuffle (Random)</p>
+                  <p className="text-[10px] text-gray-400">Scatter nodes randomly</p>
+                </div>
+              </button>
+            </div>
+          )}
+        </div>
+
+        {/* Graph Mode */}
+        <div className="bg-white rounded-lg shadow-md border border-gray-200 px-3 py-1.5 flex items-center gap-2">
+          <Network className={`w-3.5 h-3.5 ${graphMode ? 'text-purple-600' : 'text-gray-400'}`} />
+          <span className="text-xs font-medium text-gray-600">Graph</span>
+          <button
+            onClick={() => onGraphModeChange?.(!graphMode)}
+            className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${graphMode ? 'bg-purple-600' : 'bg-gray-300'}`}
+            title="Toggle Graph Mode: DAG-based orchestration"
+          >
+            <span className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform ${graphMode ? 'translate-x-4.5' : 'translate-x-0.5'}`} />
+          </button>
+        </div>
       </div>
 
       <ReactFlow
@@ -347,6 +678,9 @@ export function FlowEditor({
         onInit={setReactFlowInstance}
         onDrop={onDrop}
         onDragOver={onDragOver}
+        onDragLeave={onDragLeave}
+        snapToGrid={true}
+        snapGrid={[20, 20]}
         deleteKeyCode={["Delete", "Backspace"]}
         multiSelectionKeyCode={["Meta", "Ctrl"]}
         fitView

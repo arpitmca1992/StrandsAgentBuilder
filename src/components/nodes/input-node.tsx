@@ -4,19 +4,34 @@ import { MessageSquare, X } from 'lucide-react';
 export function InputNode({ data, selected, id }: NodeProps) {
   const { deleteElements } = useReactFlow();
   const label = (data as any)?.label || 'User Input';
+  const _validationStatus = (data as any)?._validationStatus as 'error' | 'warning' | 'info' | undefined;
 
   const handleDelete = (event: React.MouseEvent) => {
     event.stopPropagation();
     deleteElements({ nodes: [{ id }] });
   };
 
+  const validationBorderClass = _validationStatus === 'error'
+    ? 'border-red-400 ring-2 ring-red-100'
+    : _validationStatus === 'warning'
+    ? 'border-amber-400 ring-2 ring-amber-100'
+    : '';
+
   return (
     <div className={`
-      rounded-xl border-2 min-w-[140px] transition-all duration-150
+      rounded-xl border-2 min-w-[140px] transition-all duration-150 relative
       ${selected
         ? 'border-green-500 shadow-xl ring-2 ring-green-200 bg-green-50'
-        : 'border-green-300 hover:border-green-400 hover:shadow-md bg-gradient-to-br from-green-50 to-emerald-50'}
+        : validationBorderClass || 'border-green-300 hover:border-green-400 hover:shadow-md bg-gradient-to-br from-green-50 to-emerald-50'}
     `}>
+      {/* Validation badge */}
+      {_validationStatus && !selected && (
+        <div className={`absolute -top-2 -right-2 w-5 h-5 rounded-full flex items-center justify-center text-white text-[9px] font-bold shadow-sm z-10 ${
+          _validationStatus === 'error' ? 'bg-red-500' : _validationStatus === 'warning' ? 'bg-amber-500' : 'bg-blue-400'
+        }`}>
+          {_validationStatus === 'error' ? '!' : _validationStatus === 'warning' ? '⚠' : 'i'}
+        </div>
+      )}
       <div className="px-4 py-3 flex items-center gap-2">
         <div className="w-7 h-7 rounded-full bg-green-100 border border-green-200 flex items-center justify-center">
           <MessageSquare className="w-3.5 h-3.5 text-green-600" />

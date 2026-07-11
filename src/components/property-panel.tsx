@@ -60,17 +60,24 @@ export function PropertyPanel({
 
   const renderAgentProperties = (data: any) => (
     <div className="space-y-4">
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">
-          Agent Name
-        </label>
-        <input
-          type="text"
-          value={data.label || ''}
-          onChange={(e) => handleInputChange('label', e.target.value)}
-          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
-          placeholder="Agent Name"
-        />
+      {/* Primary Configuration — Always Visible */}
+      <div className="space-y-3">
+        <div className="flex items-center gap-2 mb-1">
+          <div className="w-1.5 h-1.5 rounded-full bg-blue-500" />
+          <span className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider">Primary</span>
+        </div>
+        <div>
+          <label className="block text-xs font-medium text-gray-600 mb-1.5">
+            Agent Name
+          </label>
+          <input
+            type="text"
+            value={data.label || ''}
+            onChange={(e) => handleInputChange('label', e.target.value)}
+            className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-gray-50"
+            placeholder="My Agent"
+          />
+        </div>
       </div>
 
       <ModelProviderConfig
@@ -1004,28 +1011,29 @@ export function PropertyPanel({
   };
 
   return (
-    <div className={`bg-white border-l border-gray-200 ${className}`}>
+    <div className={`bg-white border-l border-gray-200 flex flex-col h-full ${className}`}>
       {/* Header */}
-      <div className="flex items-center justify-between p-4 border-b border-gray-200">
-        <div className="flex items-center">
-          <Settings className="w-4 h-4 text-gray-600 mr-2" />
-          <h3 className="text-lg font-semibold text-gray-900">Properties</h3>
+      <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 flex-shrink-0">
+        <div className="flex items-center gap-2">
+          <div className="w-6 h-6 rounded-md bg-gray-100 flex items-center justify-center">
+            <Settings className="w-3.5 h-3.5 text-gray-600" />
+          </div>
+          <div>
+            <h3 className="text-sm font-semibold text-gray-900">Properties</h3>
+            <p className="text-[10px] text-gray-400 capitalize">{selectedNode.type.replace('-', ' ')}</p>
+          </div>
         </div>
         <button
           onClick={onClose}
-          className="p-1 text-gray-400 hover:text-gray-600 rounded"
+          className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-md transition-colors"
+          aria-label="Close properties panel"
         >
           <X className="w-4 h-4" />
         </button>
       </div>
 
-      {/* Content */}
-      <div className="p-4 overflow-y-auto">
-        <div className="mb-4">
-          <div className="text-sm text-gray-600 mb-2">Node Type</div>
-          <div className="font-medium text-gray-900 capitalize">{selectedNode.type}</div>
-        </div>
-
+      {/* Content — scrollable */}
+      <div className="flex-1 overflow-y-auto p-4">
         {renderProperties()}
       </div>
     </div>

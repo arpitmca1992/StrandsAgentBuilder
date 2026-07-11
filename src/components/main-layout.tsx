@@ -12,8 +12,7 @@ import { ProjectManagerComponent } from './project-manager';
 import { ResizablePanel } from './resizable-panel';
 import { type StrandsProject, ProjectManager } from '../lib/project-manager';
 import { generateStrandsAgentCode } from '../lib/code-generator';
-import { useToast, ToastContainer } from './ui/toast';
-import { WelcomeOverlay, shouldShowWelcome } from './welcome-overlay';
+import { validateFlow, type ValidationIssue } from '../lib/flow-validator';
 
 // Auto-save key for localStorage
 const AUTOSAVE_FLOW_KEY = 'strands_autosave_flow';
@@ -61,8 +60,6 @@ export function MainLayout() {
   const [newProjectName, setNewProjectName] = useState('');
   const [newProjectDescription, setNewProjectDescription] = useState('');
   const [lastSaveTime, setLastSaveTime] = useState<Date | null>(null);
-  const [showWelcome, setShowWelcome] = useState(shouldShowWelcome);
-  const { toast, toasts, dismiss } = useToast();
 
   // Load current project on mount, or load auto-saved flow if no project
   useEffect(() => {
@@ -121,19 +118,6 @@ export function MainLayout() {
       window.removeEventListener('switchToExecution', handleSwitchToExecution);
     };
   }, []);
-
-  // Keyboard shortcuts (Ctrl+S to save)
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if ((e.ctrlKey || e.metaKey) && e.key === 's') {
-        e.preventDefault();
-        handleSaveCurrentProject();
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [handleSaveCurrentProject]);
 
   const handleNodeSelect = useCallback((node: Node | null) => {
     if (node) {
@@ -200,17 +184,44 @@ export function MainLayout() {
       if (updated) {
         setCurrentProject(updated);
         setLastSaveTime(new Date());
-        toast({ title: 'Project saved', variant: 'success' });
+        /* toast removed */
       }
     } else {
       // Save as new project
       setShowNewProjectDialog(true);
     }
-  }, [currentProject, nodes, edges, graphMode, toast]);
+  }, [currentProject, nodes, edges, graphMode]);
+
+  // Keyboard shortcuts (Ctrl+S to save)
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+        e.preventDefault();
+        // Call save directly — avoids stale closure issues
+        if (currentProject) {
+          const updated = ProjectManager.updateProject(currentProject.id, {
+            nodes,
+            edges,
+            graphMode,
+          });
+          if (updated) {
+            setCurrentProject(updated);
+            setLastSaveTime(new Date());
+            /* toast removed */
+          }
+        } else {
+          setShowNewProjectDialog(true);
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [currentProject, nodes, edges, graphMode]);
 
   const handleCreateNewProject = useCallback(() => {
     if (!newProjectName.trim()) {
-      toast({ title: 'Project name is required', variant: 'warning' });
+      /* toast removed */
       return;
     }
 
@@ -246,8 +257,8 @@ export function MainLayout() {
     setLastSaveTime(null);
     ProjectManager.clearCurrentProject();
     clearAutoSavedFlow();
-    toast({ title: 'New project created', variant: 'info' });
-  }, [nodes, edges, toast]);
+    /* toast removed */
+  }, [nodes, edges]);
 
   const handleExportCurrentProject = useCallback(() => {
     if (currentProject) {
@@ -280,9 +291,9 @@ export function MainLayout() {
         setGraphMode(imported.graphMode || false);
         setLastSaveTime(new Date(imported.updatedAt));
         clearAutoSavedFlow();
-        toast({ title: 'Project imported successfully', variant: 'success' });
+        /* toast removed */
       } else {
-        toast({ title: 'Failed to import project', description: 'Please check the file format', variant: 'error' });
+        /* toast removed */
       }
     };
     reader.readAsText(file);
@@ -297,15 +308,52 @@ export function MainLayout() {
     return result.imports.join('\n') + '\n\n' + result.code;
   }, [nodes, edges, graphMode]);
 
+  // Navigate to a specific node (select it + open property panel)
+  const handleNavigateToNode = useCallback((nodeId: string) => {
+    const node = nodes.find(n => n.id === nodeId);
+    if (node) {
+      setSelectedNode(node);
+      setNodes(nodes.map(n => ({ ...n, selected: n.id === nodeId })));
+    }
+  }, [nodes]);
+
+  // Compute validation status per node — used to show colored indicators on canvas
+  const nodeValidationMap = (() => {
+    const issues = validateFlow(nodes, edges);
+    const map = new Map<string, 'error' | 'warning' | 'info'>();
+    for (const issue of issues) {
+      if (!issue.nodeId) continue;
+      const current = map.get(issue.nodeId);
+      // Keep the worst severity
+      if (!current || issue.severity === 'error' || (issue.severity === 'warning' && current === 'info')) {
+        map.set(issue.nodeId, issue.severity);
+      }
+    }
+    return map;
+  })();
+
+  // Enrich nodes with validation status for the flow editor to render
+  const enrichedNodes = nodes.map(node => {
+    const validationStatus = nodeValidationMap.get(node.id);
+    if (validationStatus && validationStatus !== (node.data as any)?._validationStatus) {
+      return { ...node, data: { ...node.data, _validationStatus: validationStatus } };
+    }
+    if (!validationStatus && (node.data as any)?._validationStatus) {
+      const { _validationStatus, ...rest } = node.data as any;
+      return { ...node, data: rest };
+    }
+    return node;
+  });
+
   return (
-    <div className="h-screen w-screen flex bg-gray-50">
-      {/* Node Palette Sidebar */}
-      <NodePalette className="w-72 flex-shrink-0" />
+    <div className="h-screen w-screen flex bg-gray-50 overflow-hidden">
+      {/* Node Palette Sidebar — fixed, scrollable internally */}
+      <NodePalette className="w-72 flex-shrink-0 h-screen" />
       
       {/* Main Content */}
-      <div className="flex-1 flex flex-col min-w-0">
+      <div className="flex-1 flex flex-col min-w-0 h-screen overflow-hidden">
         {/* Header — Compact, branded */}
-        <header className="bg-white border-b border-gray-200">
+        <header className="bg-white border-b border-gray-200 flex-shrink-0">
           {/* Top bar: Project + Actions */}
           <div className="flex items-center h-12 px-4 gap-4">
             {/* Project Name */}
@@ -382,7 +430,7 @@ export function MainLayout() {
               <div className="w-px h-5 bg-gray-200 mx-1" />
 
               <a
-                href="https://github.com/xiehust/strands_studio_ui"
+                href="https://github.com/arpitmca1992/StrandsAgentBuilder"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="p-1.5 rounded-md text-gray-500 hover:text-gray-700 hover:bg-gray-100 transition-colors"
@@ -394,55 +442,57 @@ export function MainLayout() {
             </div>
           </div>
 
-          {/* Tab bar: Panel mode switcher */}
-          <div className="flex items-center h-9 px-4 gap-0.5 border-t border-gray-100 bg-gray-50/50">
-            <button
-              onClick={() => { setRightPanelMode('code'); setShowCodePanel(true); }}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
-                showCodePanel && rightPanelMode === 'code'
-                  ? 'bg-white text-blue-700 shadow-sm border border-gray-200'
-                  : 'text-gray-600 hover:text-gray-800 hover:bg-white/60'
-              }`}
-            >
-              <Code className="w-3.5 h-3.5" />
-              Code
-            </button>
+          {/* Tab bar: Panel mode switcher — IDE-style tabs */}
+          <div className="flex items-center h-9 px-2 border-t border-gray-200 bg-gray-100/80">
+            <div className="flex items-center gap-px">
+              <button
+                onClick={() => { setRightPanelMode('code'); setShowCodePanel(true); }}
+                className={`flex items-center gap-1.5 px-4 py-1.5 text-xs font-medium transition-all border-b-2 ${
+                  showCodePanel && rightPanelMode === 'code'
+                    ? 'bg-white text-blue-700 border-blue-500 shadow-sm rounded-t-md'
+                    : 'text-gray-500 border-transparent hover:text-gray-700 hover:bg-gray-200/60 rounded-t-md'
+                }`}
+              >
+                <Code className="w-3.5 h-3.5" />
+                Code
+              </button>
 
-            <button
-              onClick={() => { setRightPanelMode('execution'); setShowCodePanel(true); }}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
-                showCodePanel && rightPanelMode === 'execution'
-                  ? 'bg-white text-green-700 shadow-sm border border-gray-200'
-                  : 'text-gray-600 hover:text-gray-800 hover:bg-white/60'
-              }`}
-            >
-              <Terminal className="w-3.5 h-3.5" />
-              Execute
-            </button>
+              <button
+                onClick={() => { setRightPanelMode('execution'); setShowCodePanel(true); }}
+                className={`flex items-center gap-1.5 px-4 py-1.5 text-xs font-medium transition-all border-b-2 ${
+                  showCodePanel && rightPanelMode === 'execution'
+                    ? 'bg-white text-green-700 border-green-500 shadow-sm rounded-t-md'
+                    : 'text-gray-500 border-transparent hover:text-gray-700 hover:bg-gray-200/60 rounded-t-md'
+                }`}
+              >
+                <Terminal className="w-3.5 h-3.5" />
+                Execute
+              </button>
 
-            <button
-              onClick={() => { setRightPanelMode('deploy'); setShowCodePanel(true); }}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
-                showCodePanel && rightPanelMode === 'deploy'
-                  ? 'bg-white text-purple-700 shadow-sm border border-gray-200'
-                  : 'text-gray-600 hover:text-gray-800 hover:bg-white/60'
-              }`}
-            >
-              <Rocket className="w-3.5 h-3.5" />
-              Deploy
-            </button>
+              <button
+                onClick={() => { setRightPanelMode('deploy'); setShowCodePanel(true); }}
+                className={`flex items-center gap-1.5 px-4 py-1.5 text-xs font-medium transition-all border-b-2 ${
+                  showCodePanel && rightPanelMode === 'deploy'
+                    ? 'bg-white text-purple-700 border-purple-500 shadow-sm rounded-t-md'
+                    : 'text-gray-500 border-transparent hover:text-gray-700 hover:bg-gray-200/60 rounded-t-md'
+                }`}
+              >
+                <Rocket className="w-3.5 h-3.5" />
+                Deploy
+              </button>
 
-            <button
-              onClick={() => { setRightPanelMode('invoke'); setShowCodePanel(true); }}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
-                showCodePanel && rightPanelMode === 'invoke'
-                  ? 'bg-white text-cyan-700 shadow-sm border border-gray-200'
-                  : 'text-gray-600 hover:text-gray-800 hover:bg-white/60'
-              }`}
-            >
-              <Play className="w-3.5 h-3.5" />
-              Invoke
-            </button>
+              <button
+                onClick={() => { setRightPanelMode('invoke'); setShowCodePanel(true); }}
+                className={`flex items-center gap-1.5 px-4 py-1.5 text-xs font-medium transition-all border-b-2 ${
+                  showCodePanel && rightPanelMode === 'invoke'
+                    ? 'bg-white text-cyan-700 border-cyan-500 shadow-sm rounded-t-md'
+                    : 'text-gray-500 border-transparent hover:text-gray-700 hover:bg-gray-200/60 rounded-t-md'
+                }`}
+              >
+                <Play className="w-3.5 h-3.5" />
+                Invoke
+              </button>
+            </div>
 
             {/* Spacer */}
             <div className="flex-1" />
@@ -450,8 +500,13 @@ export function MainLayout() {
             {/* Toggle panel visibility */}
             <button
               onClick={() => setShowCodePanel(!showCodePanel)}
-              className="p-1.5 rounded-md text-gray-400 hover:text-gray-600 hover:bg-white/60 transition-colors"
+              className={`p-1.5 rounded-md transition-colors ${
+                showCodePanel
+                  ? 'text-gray-500 hover:text-gray-700 hover:bg-gray-200/60'
+                  : 'text-blue-500 hover:text-blue-700 hover:bg-blue-50'
+              }`}
               title={showCodePanel ? 'Hide right panel' : 'Show right panel'}
+              aria-label={showCodePanel ? 'Hide right panel' : 'Show right panel'}
             >
               {showCodePanel ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
             </button>
@@ -459,11 +514,11 @@ export function MainLayout() {
         </header>
         
         {/* Flow Editor, Property Panel, and Code Panel */}
-        <div className="flex-1 flex">
+        <div className="flex-1 flex min-h-0 overflow-hidden">
           <FlowEditor
             className="flex-1"
             onNodeSelect={handleNodeSelect}
-            nodes={nodes}
+            nodes={enrichedNodes}
             onNodesChange={handleNodesChange}
             edges={edges}
             onEdgesChange={handleEdgesChange}
@@ -473,7 +528,7 @@ export function MainLayout() {
           
           {selectedNode && (
             <PropertyPanel
-              className="w-80 flex-shrink-0"
+              className="w-80 flex-shrink-0 h-full overflow-hidden"
               selectedNode={selectedNode}
               onClose={handleClosePanel}
               onUpdateNode={handleUpdateNode}
@@ -495,6 +550,7 @@ export function MainLayout() {
                   nodes={nodes}
                   edges={edges}
                   graphMode={graphMode}
+                  onNavigateToNode={handleNavigateToNode}
                 />
               ) : rightPanelMode === 'execution' ? (
                 <ExecutionPanel
@@ -581,11 +637,11 @@ export function MainLayout() {
         </div>
       )}
 
-      {/* Toast Notifications */}
-      <ToastContainer toasts={toasts} onDismiss={dismiss} />
+      
+
 
       {/* Welcome Overlay (first-time users) */}
-      {showWelcome && <WelcomeOverlay onDismiss={() => setShowWelcome(false)} />}
+
     </div>
   );
 }

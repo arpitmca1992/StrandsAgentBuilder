@@ -4,19 +4,34 @@ import { Send, X } from 'lucide-react';
 export function OutputNode({ data, selected, id }: NodeProps) {
   const { deleteElements } = useReactFlow();
   const label = (data as any)?.label || 'Output';
+  const _validationStatus = (data as any)?._validationStatus as 'error' | 'warning' | 'info' | undefined;
 
   const handleDelete = (event: React.MouseEvent) => {
     event.stopPropagation();
     deleteElements({ nodes: [{ id }] });
   };
 
+  const validationBorderClass = _validationStatus === 'error'
+    ? 'border-red-400 ring-2 ring-red-100'
+    : _validationStatus === 'warning'
+    ? 'border-amber-400 ring-2 ring-amber-100'
+    : '';
+
   return (
     <div className={`
-      rounded-xl border-2 min-w-[140px] transition-all duration-150
+      rounded-xl border-2 min-w-[140px] transition-all duration-150 relative
       ${selected
         ? 'border-red-500 shadow-xl ring-2 ring-red-200 bg-red-50'
-        : 'border-red-300 hover:border-red-400 hover:shadow-md bg-gradient-to-br from-red-50 to-rose-50'}
+        : validationBorderClass || 'border-red-300 hover:border-red-400 hover:shadow-md bg-gradient-to-br from-red-50 to-rose-50'}
     `}>
+      {/* Validation badge */}
+      {_validationStatus && !selected && (
+        <div className={`absolute -top-2 -right-2 w-5 h-5 rounded-full flex items-center justify-center text-white text-[9px] font-bold shadow-sm z-10 ${
+          _validationStatus === 'error' ? 'bg-red-500' : _validationStatus === 'warning' ? 'bg-amber-500' : 'bg-blue-400'
+        }`}>
+          {_validationStatus === 'error' ? '!' : _validationStatus === 'warning' ? '⚠' : 'i'}
+        </div>
+      )}
       {/* Input Handle */}
       <Handle
         type="target"

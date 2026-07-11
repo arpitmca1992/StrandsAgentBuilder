@@ -163,74 +163,86 @@ export function generateCustomGuardrailHookCode(data: GuardrailsCodeOptions): st
   const mode = data.customGuardrailHookMode || 'notify_only';
   const isBlocking = mode === 'blocking';
 
-  const code = `
-# Custom Guardrail Hook — ${isBlocking ? 'Blocking' : 'Notify-Only (Shadow)'} Mode
-class GuardrailValidationHook(HookProvider):
-    """Evaluates content against Bedrock Guardrails API.
-    
-    Mode: ${isBlocking ? 'BLOCKING — will raise exception on violations' : 'NOTIFY-ONLY — logs violations without blocking'}
-    
-    Security: Uses IAM role-based auth, no hardcoded credentials.
-    """
+  const blockInputAction = isBlocking
+    ? 'raise ValueError(f"[GUARDRAIL BLOCKED] Input violates safety policy")'
+    : 'print(f"[GUARDRAIL] WOULD BLOCK INPUT: {content[:100]}...")';
 
-    def __init__(self, guardrail_id: str, guardrail_version: str, region: str = "us-east-1"):
-        self.guardrail_id = guardrail_id
-        self.guardrail_version = guardrail_version
-        self.bedrock_client = boto3.client("bedrock-runtime", region)
+  const blockOutputAction = isBlocking
+    ? 'raise ValueError(f"[GUARDRAIL BLOCKED] Output violates safety policy")'
+    : 'print(f"[GUARDRAIL] WOULD BLOCK OUTPUT: {content[:100]}...")';
 
-    def register_hooks(self, registry: HookRegistry) -> None:
-        registry.add_callback(MessageAddedEvent, self._check_input)
-        registry.add_callback(AfterInvocationEvent, self._check_output)
+  const modeLabel = isBlocking ? 'Blocking' : 'Notify-Only (Shadow)';
+  const modeDesc = isBlocking
+    ? 'BLOCKING — will raise exception on violations'
+    : 'NOTIFY-ONLY — logs violations without blocking';
+  const inputDoc = isBlocking ? '— BLOCKS if violation detected' : '— logs violations only';
+  const outputDoc = isBlocking ? '— BLOCKS if violation detected' : '— logs violations only';
 
-    def _evaluate(self, content: str, source: str = "INPUT") -> dict:
-        """Evaluate content against guardrails. Returns assessment result."""
-        if not content or not content.strip():
-            return {"action": "NONE"}
-        try:
-            response = self.bedrock_client.apply_guardrail(
-                guardrailIdentifier=self.guardrail_id,
-                guardrailVersion=self.guardrail_version,
-                source=source,
-                content=[{"text": {"text": content[:10000}}}]  # Limit input size
-            )
-            return response
-        except Exception as e:
-            print(f"[GUARDRAIL] Evaluation error: {e}")
-            return {"action": "ERROR"}
+  const lines: string[] = [];
+  lines.push(`# Custom Guardrail Hook — ${modeLabel} Mode`);
+  lines.push(`class GuardrailValidationHook(HookProvider):`);
+  lines.push(`    """Evaluates content against Bedrock Guardrails API.`);
+  lines.push(``);
+  lines.push(`    Mode: ${modeDesc}`);
+  lines.push(``);
+  lines.push(`    Security: Uses IAM role-based auth, no hardcoded credentials.`);
+  lines.push(`    """`);
+  lines.push(``);
+  lines.push(`    def __init__(self, guardrail_id: str, guardrail_version: str, region: str = "us-east-1"):`);
+  lines.push(`        self.guardrail_id = guardrail_id`);
+  lines.push(`        self.guardrail_version = guardrail_version`);
+  lines.push(`        self.bedrock_client = boto3.client("bedrock-runtime", region)`);
+  lines.push(``);
+  lines.push(`    def register_hooks(self, registry: HookRegistry) -> None:`);
+  lines.push(`        registry.add_callback(MessageAddedEvent, self._check_input)`);
+  lines.push(`        registry.add_callback(AfterInvocationEvent, self._check_output)`);
+  lines.push(``);
+  lines.push(`    def _evaluate(self, content: str, source: str = "INPUT") -> dict:`);
+  lines.push(`        """Evaluate content against guardrails. Returns assessment result."""`);
+  lines.push(`        if not content or not content.strip():`);
+  lines.push(`            return {"action": "NONE"}`);
+  lines.push(`        try:`);
+  lines.push(`            response = self.bedrock_client.apply_guardrail(`);
+  lines.push(`                guardrailIdentifier=self.guardrail_id,`);
+  lines.push(`                guardrailVersion=self.guardrail_version,`);
+  lines.push(`                source=source,`);
+  lines.push(`                content=[{"text": {"text": content[:10000]}}]`);
+  lines.push(`            )`);
+  lines.push(`            return response`);
+  lines.push(`        except Exception as e:`);
+  lines.push(`            print(f"[GUARDRAIL] Evaluation error: {e}")`);
+  lines.push(`            return {"action": "ERROR"}`);
+  lines.push(``);
+  lines.push(`    def _check_input(self, event: MessageAddedEvent) -> None:`);
+  lines.push(`        """Check user input ${inputDoc}."""`);
+  lines.push(`        if event.message.get("role") != "user":`);
+  lines.push(`            return`);
+  lines.push(`        content = "".join(`);
+  lines.push(`            block.get("text", "") for block in event.message.get("content", [])`);
+  lines.push(`        )`);
+  lines.push(`        if not content:`);
+  lines.push(`            return`);
+  lines.push(`        result = self._evaluate(content, "INPUT")`);
+  lines.push(`        if result.get("action") == "GUARDRAIL_INTERVENED":`);
+  lines.push(`            ${blockInputAction}`);
+  lines.push(``);
+  lines.push(`    def _check_output(self, event: AfterInvocationEvent) -> None:`);
+  lines.push(`        """Check assistant output ${outputDoc}."""`);
+  lines.push(`        if not event.agent.messages:`);
+  lines.push(`            return`);
+  lines.push(`        last = event.agent.messages[-1]`);
+  lines.push(`        if last.get("role") != "assistant":`);
+  lines.push(`            return`);
+  lines.push(`        content = "".join(`);
+  lines.push(`            block.get("text", "") for block in last.get("content", [])`);
+  lines.push(`        )`);
+  lines.push(`        if not content:`);
+  lines.push(`            return`);
+  lines.push(`        result = self._evaluate(content, "OUTPUT")`);
+  lines.push(`        if result.get("action") == "GUARDRAIL_INTERVENED":`);
+  lines.push(`            ${blockOutputAction}`);
 
-    def _check_input(self, event: MessageAddedEvent) -> None:
-        """Check user input ${isBlocking ? '— BLOCKS if violation detected' : '— logs violations only'}."""
-        if event.message.get("role") != "user":
-            return
-        content = "".join(
-            block.get("text", "") for block in event.message.get("content", [])
-        )
-        if not content:
-            return
-        result = self._evaluate(content, "INPUT")
-        if result.get("action") == "GUARDRAIL_INTERVENED":
-            ${isBlocking
-    ? `raise ValueError(f"[GUARDRAIL BLOCKED] Input violates safety policy")`
-    : `print(f"[GUARDRAIL] WOULD BLOCK INPUT: {content[:100]}...")`}
-
-    def _check_output(self, event: AfterInvocationEvent) -> None:
-        """Check assistant output ${isBlocking ? '— BLOCKS if violation detected' : '— logs violations only'}."""
-        if not event.agent.messages:
-            return
-        last = event.agent.messages[-1]
-        if last.get("role") != "assistant":
-            return
-        content = "".join(
-            block.get("text", "") for block in last.get("content", [])
-        )
-        if not content:
-            return
-        result = self._evaluate(content, "OUTPUT")
-        if result.get("action") == "GUARDRAIL_INTERVENED":
-            ${isBlocking
-    ? `raise ValueError(f"[GUARDRAIL BLOCKED] Output violates safety policy")`
-    : `print(f"[GUARDRAIL] WOULD BLOCK OUTPUT: {content[:100]}...")`}
-`;
+  const code = lines.join('\n');
 
   return code;
 }

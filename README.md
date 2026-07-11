@@ -1,8 +1,8 @@
-# Open Studio for Strands Agent SDK
+# Strands Agent Builder
 
 A visual drag-and-drop interface for creating, configuring, and executing AI agent workflows. Build complex agent interactions through an intuitive node-based editor that generates Python code using the Strands Agent SDK.
 
-⚠️ **Disclaimer: The Studio is NOT an official Amazon product - independent open-source project**
+⚠️ **Disclaimer: This is NOT an official Amazon product — independent open-source project**
 
 ## Features
 
@@ -20,7 +20,7 @@ A visual drag-and-drop interface for creating, configuring, and executing AI age
 
 ## Demos
 ### Video
-- Youtube: [Build AI Agent Teams Visually - No Code Required! 🤖 | Open Studio for Strands Agent](https://www.youtube.com/watch?v=lE6y6jM0b1Y)
+- Youtube: [Build AI Agent Teams Visually - No Code Required! 🤖 | Strands Agent Builder](https://www.youtube.com/watch?v=lE6y6jM0b1Y)
 - Wechat: [一款专为Strands Agent打造的无代码可视化编排工具](https://mp.weixin.qq.com/s/5KjbVRKAAGrRYQudLqlevg)
 
 ### 1. A single agent with MCP, builtin tool, custom tool
@@ -103,7 +103,7 @@ npm run dev:full
 3. Have a natural conversation with your agent using streaming responses and full conversation history
 
 ### Play with sample flow
-Download this sample [Flow](https://github.com/xiehust/strands_studio_ui/blob/main/assets/aws_knowledge_mcp_agent.json) and import to the UI, and experience it.
+Download this sample [Flow](https://github.com/arpitmca1992/StrandsAgentBuilder/blob/main/assets/aws_knowledge_mcp_agent.json) and import to the UI, and experience it.
 ![alt text](assets/sample_image.png)
 
 ### Production Deployment
@@ -193,7 +193,7 @@ export ALB_HOSTNAME=your-alb-hostname.us-west-2.elb.amazonaws.com
 
 ## Agent Deployment
 
-The Open Studio now supports **one-click deployment** of your agent workflows to AWS infrastructure, making it easy to move from development to production.
+The Strands Agent Builder now supports **one-click deployment** of your agent workflows to AWS infrastructure, making it easy to move from development to production.
 
 ### Deployment Options
 

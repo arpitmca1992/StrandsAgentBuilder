@@ -483,41 +483,45 @@ export function ExecutionPanel({
   return (
     <div className={`bg-white border-l border-gray-200 flex flex-col h-full ${className}`}>
       {/* Header */}
-      <div className="flex items-center justify-between p-4 border-b border-gray-200">
-        <div className="flex items-center">
-          <Terminal className="w-4 h-4 text-gray-600 mr-2" />
-          <h3 className="text-lg font-semibold text-gray-900">Agent Execution</h3>
+      <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 flex-shrink-0">
+        <div className="flex items-center gap-2">
+          <div className="w-6 h-6 rounded-md bg-green-50 flex items-center justify-center">
+            <Terminal className="w-3.5 h-3.5 text-green-600" />
+          </div>
+          <div>
+            <h3 className="text-sm font-semibold text-gray-900">Execute</h3>
+            <p className="text-[10px] text-gray-400">
+              {backendAvailable ? 'Backend ready' : '⚠ Connecting...'}
+            </p>
+          </div>
         </div>
-        <div className="flex items-center space-x-2">
-          {!backendAvailable && (
-            <span className="text-xs text-red-500 mr-2">Backend Connecting</span>
-          )}
+        <div className="flex items-center gap-1.5">
           <button
             onClick={() => setShowChatModal(true)}
             disabled={!backendAvailable || !hasValidAgent()}
-            className="flex items-center px-3 py-1 text-sm rounded bg-blue-500 text-white hover:bg-blue-600 disabled:bg-gray-300 disabled:cursor-not-allowed"
-            title={!hasValidAgent() ? 'Create a valid agent flow with input/output nodes first' : 'Start a conversation with your agent'}
+            className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium rounded-md bg-blue-600 text-white hover:bg-blue-700 disabled:bg-gray-200 disabled:text-gray-400 disabled:cursor-not-allowed transition-colors shadow-sm"
+            title={!hasValidAgent() ? 'Create a valid agent flow first' : 'Chat with your agent'}
           >
-            <MessageSquare className="w-3 h-3 mr-1" />
-            Chat with Agent
+            <MessageSquare className="w-3 h-3" />
+            Chat
           </button>
           <button
             onClick={isExecuting ? handleStop : handleExecute}
             disabled={!backendAvailable}
-            className={`flex items-center px-3 py-1 text-sm rounded ${
+            className={`flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium rounded-md shadow-sm transition-colors ${
               isExecuting
-                ? 'bg-red-500 text-white hover:bg-red-600'
-                : 'bg-green-500 text-white hover:bg-green-600 disabled:bg-gray-300 disabled:cursor-not-allowed'
+                ? 'bg-red-600 text-white hover:bg-red-700'
+                : 'bg-green-600 text-white hover:bg-green-700 disabled:bg-gray-200 disabled:text-gray-400 disabled:cursor-not-allowed'
             }`}
           >
             {isExecuting ? (
               <>
-                <Square className="w-3 h-3 mr-1" />
+                <Square className="w-3 h-3" />
                 Stop
               </>
             ) : (
               <>
-                <Play className="w-3 h-3 mr-1" />
+                <Play className="w-3 h-3" />
                 Execute
               </>
             )}

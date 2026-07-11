@@ -1,7 +1,7 @@
 # Session: Strands Studio UI — Full Feature Contribution Plan
 
 **Started:** 2026-07-09T13:18 IST  
-**Goal:** Contribute to Open Studio for Strands Agent SDK by exposing ALL latest Strands Agent SDK features in the UI configuration panels.  
+**Goal:** Build Strands Agent Builder — a visual studio exposing ALL latest Strands Agent SDK features in the UI configuration panels.  
 **Approach:** First, identify all skills needed from skill.fish to train Kiro. Then build the full feature matrix.
 
 ---
@@ -377,7 +377,7 @@ skillfish add <owner/repo> --all
 - Conversation Manager: https://strandsagents.com/docs/api/python/strands.agent.conversation_manager.conversation_manager/index.md
 - skill.fish: https://skill.fish
 - skillfish CLI: https://github.com/knoxgraeme/skillfish
-- Open Studio Repo: https://github.com/xiehust/strands_studio_ui
+- Open Studio Repo: https://github.com/arpitmca1992/StrandsAgentBuilder
 
 ---
 

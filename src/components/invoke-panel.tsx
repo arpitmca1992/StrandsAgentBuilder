@@ -1074,20 +1074,25 @@ export function InvokePanel({ className = '' }: InvokePanelProps) {
   }, []);
 
   return (
-    <div className={`flex flex-col h-full bg-white border border-gray-200 rounded-lg ${className}`}>
+    <div className={`flex flex-col h-full bg-white border-l border-gray-200 ${className}`}>
       {/* Header */}
-      <div className="flex items-center justify-between p-3 border-b border-gray-200">
+      <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 flex-shrink-0">
         <div className="flex items-center gap-2">
-          <Play className="h-4 w-4 text-blue-600" />
-          <span className="font-medium text-gray-900">Invoke Agent</span>
+          <div className="w-6 h-6 rounded-md bg-cyan-50 flex items-center justify-center">
+            <Play className="w-3.5 h-3.5 text-cyan-600" />
+          </div>
+          <div>
+            <h3 className="text-sm font-semibold text-gray-900">Cloud Invoke</h3>
+            <p className="text-[10px] text-gray-400">{deploymentHistory.length} deployment{deploymentHistory.length !== 1 ? 's' : ''} available</p>
+          </div>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-1.5">
           <button
             onClick={loadDeploymentHistory}
-            className="p-1 text-gray-400 hover:text-gray-600"
+            className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-md transition-colors"
             title="Refresh deployment history"
           >
-            <RefreshCw className="h-4 w-4" />
+            <RefreshCw className="h-3.5 w-3.5" />
           </button>
         </div>
       </div>

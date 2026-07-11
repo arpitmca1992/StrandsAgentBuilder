@@ -23,50 +23,55 @@ export function DeployPanel({ nodes, edges, graphMode = false, className = '' }:
   return (
     <div className={`bg-white border-l border-gray-200 flex flex-col h-full ${className}`}>
       {/* Header */}
-      <div className="flex items-center justify-between p-4 border-b border-gray-200">
-        <div className="flex items-center">
-          <Rocket className="w-4 h-4 text-purple-600 mr-2" />
-          <h3 className="text-lg font-semibold text-gray-900">Deploy Agent</h3>
+      <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 flex-shrink-0">
+        <div className="flex items-center gap-2">
+          <div className="w-6 h-6 rounded-md bg-purple-50 flex items-center justify-center">
+            <Rocket className="w-3.5 h-3.5 text-purple-600" />
+          </div>
+          <div>
+            <h3 className="text-sm font-semibold text-gray-900">Deploy Agent</h3>
+            <p className="text-[10px] text-gray-400">One-click to AWS</p>
+          </div>
         </div>
       </div>
 
       {/* Deployment Target Selection */}
-      <div className="p-4 border-b border-gray-200">
-        <div className="space-y-3">
-          <label className="text-sm font-medium text-gray-900">Deployment Target</label>
-          <div className="grid grid-cols-3 gap-3">
+      <div className="p-4 border-b border-gray-200 flex-shrink-0">
+        <div className="space-y-2">
+          <label className="text-xs font-medium text-gray-600">Target</label>
+          <div className="grid grid-cols-3 gap-2">
             <button
               onClick={() => handleTargetChange('agentcore')}
-              className={`flex items-center p-3 border rounded-lg transition-colors ${
+              className={`flex flex-col items-center p-2.5 border rounded-lg transition-all text-center ${
                 deploymentTarget === 'agentcore'
-                  ? 'border-purple-500 bg-purple-50 text-purple-700'
-                  : 'border-gray-200 hover:border-gray-300'
+                  ? 'border-purple-500 bg-purple-50 text-purple-700 shadow-sm'
+                  : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50 text-gray-600'
               }`}
             >
-              <Server className="w-4 h-4 mr-2" />
-              <span className="text-sm font-medium">AWS AgentCore</span>
+              <Server className="w-4 h-4 mb-1" />
+              <span className="text-[10px] font-medium">AgentCore</span>
             </button>
             <button
               onClick={() => handleTargetChange('lambda')}
-              className={`flex items-center p-3 border rounded-lg transition-colors ${
+              className={`flex flex-col items-center p-2.5 border rounded-lg transition-all text-center ${
                 deploymentTarget === 'lambda'
-                  ? 'border-orange-500 bg-orange-50 text-orange-700'
-                  : 'border-gray-200 hover:border-gray-300'
+                  ? 'border-orange-500 bg-orange-50 text-orange-700 shadow-sm'
+                  : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50 text-gray-600'
               }`}
             >
-              <Cloud className="w-4 h-4 mr-2" />
-              <span className="text-sm font-medium">AWS Lambda</span>
+              <Cloud className="w-4 h-4 mb-1" />
+              <span className="text-[10px] font-medium">Lambda</span>
             </button>
             <button
               onClick={() => handleTargetChange('ecs-fargate')}
-              className={`flex items-center p-3 border rounded-lg transition-colors ${
+              className={`flex flex-col items-center p-2.5 border rounded-lg transition-all text-center ${
                 deploymentTarget === 'ecs-fargate'
-                  ? 'border-blue-500 bg-blue-50 text-blue-700'
-                  : 'border-gray-200 hover:border-gray-300'
+                  ? 'border-blue-500 bg-blue-50 text-blue-700 shadow-sm'
+                  : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50 text-gray-600'
               }`}
             >
-              <Container className="w-4 h-4 mr-2" />
-              <span className="text-sm font-medium">ECS Fargate</span>
+              <Container className="w-4 h-4 mb-1" />
+              <span className="text-[10px] font-medium">Fargate</span>
             </button>
           </div>
         </div>
