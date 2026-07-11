@@ -10,23 +10,25 @@
 @tailwind components;
 @tailwind utilities;
 
-/* React Flow — remove default node selection outline */
+/* React Flow — remove ALL default node borders/outlines */
 .react-flow__node {
   outline: none !important;
-}
-.react-flow__node:focus {
-  outline: none !important;
+  border: none !important;
   box-shadow: none !important;
+  background: transparent !important;
+  padding: 0 !important;
 }
-.react-flow__node.selected {
+.react-flow__node:focus,
+.react-flow__node:focus-visible,
+.react-flow__node.selected,
+.react-flow__node.draggable,
+.react-flow__node.draggable:focus,
+.react-flow__node.selectable,
+.react-flow__node.selectable:focus {
   outline: none !important;
-}
-.react-flow__node.draggable {
-  outline: none !important;
-}
-.react-flow__node.draggable:focus {
-  outline: none !important;
+  border: none !important;
   box-shadow: none !important;
+  background: transparent !important;
 }
 
 @theme inline {
