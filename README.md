@@ -4,7 +4,6 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Strands SDK](https://img.shields.io/badge/Strands_SDK-Compatible-blue.svg)](https://strandsagents.com/)
-[![Buy Me A Coffee](https://img.shields.io/badge/Buy_Me_A_Coffee-Support-orange.svg)](https://www.buymeacoffee.com/arpitmca1992)
 
 > Build AI agent teams visually — drag, connect, configure, deploy. No coding required to get started. Full Python code generated automatically.
 
@@ -87,18 +86,6 @@ Users of this tool are responsible for ensuring their AI agents comply with:
 - Applicable laws and regulations (GDPR, CCPA, etc.)
 - AWS Acceptable Use Policy (if deploying to AWS)
 - Model provider terms of service (OpenAI, Anthropic, Google, etc.)
-
----
-
-## ☕ Support This Project
-
-If you find Strands Agent Builder useful, consider buying me a coffee to support continued development!
-
-<a href="https://www.buymeacoffee.com/arpitmca1992" target="_blank">
-  <img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Buy Me A Coffee" height="50" width="217">
-</a>
-
-Your support helps fund new features, bug fixes, documentation, and community support.
 
 ---
 
