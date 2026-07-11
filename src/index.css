@@ -21,6 +21,13 @@
 .react-flow__node.selected {
   outline: none !important;
 }
+.react-flow__node.draggable {
+  outline: none !important;
+}
+.react-flow__node.draggable:focus {
+  outline: none !important;
+  box-shadow: none !important;
+}
 
 @theme inline {
   --radius-sm: calc(var(--radius) - 4px);
