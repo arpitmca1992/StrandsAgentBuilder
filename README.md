@@ -13,15 +13,6 @@ A visual drag-and-drop interface for creating, configuring, and executing AI age
 
 `ai-agents` `agent-builder` `visual-programming` `no-code` `low-code` `strands-agents` `multi-agent` `agent-orchestration` `llm` `bedrock` `openai` `anthropic` `drag-and-drop` `flow-editor` `react-flow` `xyflow` `python-code-generation` `aws-bedrock` `agent-workflow` `ai-workflow-builder` `mcp-server` `model-context-protocol` `swarm-agents` `graph-agents` `a2a-protocol` `agent-to-agent` `guardrails` `opentelemetry` `agent-deployment` `lambda-deployment` `ecs-fargate` `agentcore` `structured-output` `conversation-management` `session-management` `agent-sops` `human-in-the-loop`
 
-### 📋 GitHub Topics (add these to your repo settings)
-
-```
-ai-agents, agent-builder, no-code, low-code, visual-programming, 
-strands-agents, multi-agent-systems, llm, aws-bedrock, openai, 
-anthropic, python, react, typescript, drag-and-drop, workflow-builder,
-mcp, agent-orchestration, ai-workflow, code-generation
-```
-
 ---
 
 ## ⭐ Highlights — Ready-to-Use Templates
