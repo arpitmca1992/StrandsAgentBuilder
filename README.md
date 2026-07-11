@@ -69,6 +69,18 @@ Users of this tool are responsible for ensuring their AI agents comply with:
 
 ---
 
+## ☕ Support This Project
+
+If you find Strands Agent Builder useful, consider buying me a coffee to support continued development!
+
+<a href="https://www.buymeacoffee.com/arpitmca1992" target="_blank">
+  <img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Buy Me A Coffee" height="50" width="217">
+</a>
+
+Your support helps fund new features, bug fixes, documentation, and community support.
+
+---
+
 ## Features
 
 - **Visual Flow Editor**: Drag-and-drop interface for building agent workflows
