@@ -1,6 +1,27 @@
 # Strands Agent Builder
 
-A visual drag-and-drop interface for creating, configuring, and executing AI agent workflows. Build complex agent interactions through an intuitive node-based editor that generates Python code using the Strands Agent SDK.
+**Visual AI Agent Builder** | No-Code Agent Workflows | Drag-and-Drop | Python Code Generation | Multi-Agent Orchestration
+
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Strands SDK](https://img.shields.io/badge/Strands_SDK-Compatible-blue.svg)](https://strandsagents.com/)
+[![Buy Me A Coffee](https://img.shields.io/badge/Buy_Me_A_Coffee-Support-orange.svg)](https://www.buymeacoffee.com/arpitmca1992)
+
+> Build AI agent teams visually — drag, connect, configure, deploy. No coding required to get started. Full Python code generated automatically.
+
+A visual drag-and-drop interface for creating, configuring, and executing AI agent workflows. Build complex agent interactions through an intuitive node-based editor that generates Python code using the [Strands Agents SDK](https://strandsagents.com/).
+
+### 🔍 Keywords
+
+`ai-agents` `agent-builder` `visual-programming` `no-code` `low-code` `strands-agents` `multi-agent` `agent-orchestration` `llm` `bedrock` `openai` `anthropic` `drag-and-drop` `flow-editor` `react-flow` `xyflow` `python-code-generation` `aws-bedrock` `agent-workflow` `ai-workflow-builder` `mcp-server` `model-context-protocol` `swarm-agents` `graph-agents` `a2a-protocol` `agent-to-agent` `guardrails` `opentelemetry` `agent-deployment` `lambda-deployment` `ecs-fargate` `agentcore` `structured-output` `conversation-management` `session-management` `agent-sops` `human-in-the-loop`
+
+### 📋 GitHub Topics (add these to your repo settings)
+
+```
+ai-agents, agent-builder, no-code, low-code, visual-programming, 
+strands-agents, multi-agent-systems, llm, aws-bedrock, openai, 
+anthropic, python, react, typescript, drag-and-drop, workflow-builder,
+mcp, agent-orchestration, ai-workflow, code-generation
+```
 
 ---
 
