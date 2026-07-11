@@ -19,10 +19,10 @@ export function InputNode({ data, selected, id }: NodeProps) {
 
   return (
     <div className={`
-      rounded-xl border-2 min-w-[140px] transition-all duration-150 relative
+      rounded-xl border-2 min-w-[140px] transition-all duration-150 relative outline-none
       ${selected
         ? 'border-green-500 shadow-xl ring-2 ring-green-200 bg-green-50'
-        : validationBorderClass || 'border-green-300 hover:border-green-400 hover:shadow-md bg-gradient-to-br from-green-50 to-emerald-50'}
+        : validationBorderClass || 'border-green-200 hover:border-green-400 hover:shadow-md bg-gradient-to-br from-green-50 to-emerald-50'}
     `}>
       {/* Validation badge */}
       {_validationStatus && !selected && (

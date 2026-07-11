@@ -10,6 +10,18 @@
 @tailwind components;
 @tailwind utilities;
 
+/* React Flow — remove default node selection outline */
+.react-flow__node {
+  outline: none !important;
+}
+.react-flow__node:focus {
+  outline: none !important;
+  box-shadow: none !important;
+}
+.react-flow__node.selected {
+  outline: none !important;
+}
+
 @theme inline {
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
