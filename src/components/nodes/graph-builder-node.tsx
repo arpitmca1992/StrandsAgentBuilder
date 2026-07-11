@@ -5,6 +5,11 @@ interface GraphBuilderNodeData {
   label?: string;
   enableDebugLogs?: boolean;
   executionTimeout?: number;
+  maxNodeExecutions?: number;
+  nodeTimeout?: number;
+  allowCycles?: boolean;
+  resetOnRevisit?: boolean;
+  useStreaming?: boolean;
 }
 
 export function GraphBuilderNode({ data, selected, id }: NodeProps) {
@@ -14,6 +19,10 @@ export function GraphBuilderNode({ data, selected, id }: NodeProps) {
     label = 'Graph',
     enableDebugLogs = false,
     executionTimeout = undefined,
+    maxNodeExecutions = undefined,
+    allowCycles = false,
+    resetOnRevisit = true,
+    useStreaming = false,
   } = nodeData;
 
   const handleDelete = (event: React.MouseEvent) => {
@@ -37,9 +46,12 @@ export function GraphBuilderNode({ data, selected, id }: NodeProps) {
         <Network className="w-5 h-5 text-white mr-2" />
         <span className="text-sm font-bold text-white">{label}</span>
         <div className="ml-auto flex items-center space-x-2">
-          <div className="text-xs text-white/80">
-            {enableDebugLogs && '🐛 Debug'}
-            {executionTimeout && ` ⏱️ ${executionTimeout}s`}
+          <div className="text-xs text-white/80 flex items-center gap-2">
+            {enableDebugLogs && <span>🐛 Debug</span>}
+            {executionTimeout && <span>⏱️ {executionTimeout}s</span>}
+            {maxNodeExecutions && <span>🔄 Max:{maxNodeExecutions}</span>}
+            {allowCycles && <span>♻️ Cycles</span>}
+            {useStreaming && <span>⚡ Stream</span>}
           </div>
           <Settings className="w-4 h-4 text-white/80" />
           {selected && (

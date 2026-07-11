@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Bot, Wrench, ArrowRight, ArrowLeft, Code, Server, Crown, Users, Globe, GitBranch, Search, X } from 'lucide-react';
+import { Bot, Wrench, ArrowRight, ArrowLeft, Code, Server, Crown, Users, Globe, GitBranch, Search, X, Cpu } from 'lucide-react';
 
 interface NodeTypeItem {
   type: string;
@@ -62,6 +62,16 @@ const nodeTypes: NodeTypeItem[] = [
     docUrl: 'https://strandsagents.com/docs/user-guide/concepts/multi-agent/workflow/',
     category: 'Multi-Agent',
     color: 'bg-amber-50 border-amber-200 hover:border-amber-400',
+  },
+  {
+    type: 'function-node',
+    label: 'Function Node',
+    icon: Cpu,
+    description: 'Deterministic Python function (no LLM)',
+    tooltip: 'A custom node that runs pure Python code without calling an LLM. Use for data transformation, validation, API calls, or any deterministic logic in Graph mode. Faster and cheaper than agent nodes for non-AI operations.',
+    docUrl: 'https://strandsagents.com/docs/user-guide/concepts/multi-agent/graph/#custom-node-types',
+    category: 'Multi-Agent',
+    color: 'bg-teal-50 border-teal-200 hover:border-teal-400',
   },
   {
     type: 'tool',

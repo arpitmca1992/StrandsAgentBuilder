@@ -9,3 +9,4 @@ export { MCPToolNode } from './mcp-tool-node';
 export { GraphBuilderNode } from './graph-builder-node';
 export { A2AAgentNode } from './a2a-agent-node';
 export { WorkflowNode } from './workflow-node';
+export { FunctionNode } from './function-node';
