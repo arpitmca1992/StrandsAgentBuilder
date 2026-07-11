@@ -147,6 +147,16 @@ except ImportError as e:
 except Exception as e:
     logger.warning(f"Deployment routes disabled - error: {e}")
 
+# Templates routes (MySQL-backed flow templates)
+try:
+    from app.routers.templates import router as templates_router
+    app.include_router(templates_router)
+    logger.info("Templates routes enabled (MySQL)")
+except ImportError as e:
+    logger.warning(f"Templates routes disabled - missing dependencies: {e}")
+except Exception as e:
+    logger.warning(f"Templates routes disabled - error: {e}")
+
 # Data models
 class NodeData(BaseModel):
     id: str
