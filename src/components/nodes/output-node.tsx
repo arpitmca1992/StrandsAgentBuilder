@@ -47,7 +47,7 @@ export function OutputNode({ data, selected, id }: NodeProps) {
         </div>
         <div className="flex-1">
           <span className="text-sm font-semibold text-red-800">{label}</span>
-          <p className="text-[10px] text-red-500">Agent response</p>
+          <p className="text-[10px] text-red-500">↑ Output</p>
         </div>
         {selected && (
           <button

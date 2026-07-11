@@ -38,7 +38,7 @@ export function InputNode({ data, selected, id }: NodeProps) {
         </div>
         <div className="flex-1">
           <span className="text-sm font-semibold text-green-800">{label}</span>
-          <p className="text-[10px] text-green-500">User prompt</p>
+          <p className="text-[10px] text-green-500">↓ Input</p>
         </div>
         {selected && (
           <button
