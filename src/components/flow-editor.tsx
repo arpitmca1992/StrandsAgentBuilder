@@ -178,19 +178,27 @@ export function FlowEditor({
     (params: Connection) => {
       const validation = isValidConnection(params, nodes, edges, graphMode);
       if (validation.valid) {
-        // Count existing edges from same source+handle to determine sequence number
-        const existingFromSource = edges.filter(
-          e => e.source === params.source && e.sourceHandle === params.sourceHandle
-        ).length;
-        const sequenceLabel = existingFromSource > 0 ? `${existingFromSource + 1}` : '';
+        // Determine edge label based on connection type (Strands semantics)
+        let edgeLabel: string | undefined;
+        const sourceNode = nodes.find(n => n.id === params.source);
+        const targetNode = nodes.find(n => n.id === params.target);
+
+        if (params.sourceHandle === 'sub-agents') {
+          edgeLabel = 'tool'; // Orchestrator → sub-agent = "used as tool"
+        } else if (sourceNode?.type === 'condition-node') {
+          edgeLabel = params.sourceHandle === 'true' ? '✓ true' : '✗ false';
+        } else if (graphMode && params.sourceHandle === 'output' &&
+          (params.targetHandle === 'user-input' || params.targetHandle === 'input')) {
+          edgeLabel = 'depends'; // Graph dependency
+        }
 
         setEdges(addEdge({
           ...params,
           animated: true,
-          label: sequenceLabel || undefined,
-          labelStyle: { fontSize: 10, fontWeight: 700, fill: '#6366f1' },
-          labelBgStyle: { fill: '#eef2ff', stroke: '#c7d2fe', strokeWidth: 1, rx: 4, ry: 4 },
-          labelBgPadding: [4, 2] as [number, number],
+          label: edgeLabel || undefined,
+          labelStyle: edgeLabel ? { fontSize: 9, fontWeight: 600, fill: '#6366f1' } : undefined,
+          labelBgStyle: edgeLabel ? { fill: '#eef2ff', stroke: '#c7d2fe', strokeWidth: 1, rx: 4, ry: 4 } : undefined,
+          labelBgPadding: edgeLabel ? [4, 2] as [number, number] : undefined,
           style: { stroke: '#6366f1', strokeWidth: 2 },
         }, edges));
         setConnectionError(null);
