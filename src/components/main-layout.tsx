@@ -581,9 +581,9 @@ export function MainLayout() {
 
       {/* Project Manager Modal */}
       {showProjectManager && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50">
           <ProjectManagerComponent
-            className="w-96 max-h-96 m-4"
+            className="w-[420px] max-h-[500px] m-4 bg-white rounded-xl shadow-2xl border border-gray-200"
             onLoadProject={handleLoadProject}
             onClose={() => setShowProjectManager(false)}
           />
@@ -592,9 +592,9 @@ export function MainLayout() {
 
       {/* New Project Dialog */}
       {showNewProjectDialog && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 w-80 mx-4">
-            <h4 className="text-lg font-semibold text-gray-900 mb-4">Create New Project</h4>
+        <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl shadow-2xl border border-gray-200 p-6 w-96 mx-4">
+            <h4 className="text-base font-semibold text-gray-900 mb-4">Create New Project</h4>
             
             <div className="space-y-4">
               <div>
@@ -624,16 +624,16 @@ export function MainLayout() {
               </div>
             </div>
 
-            <div className="flex justify-end space-x-2 mt-6">
+            <div className="flex justify-end gap-2 mt-6">
               <button
                 onClick={() => setShowNewProjectDialog(false)}
-                className="px-3 py-2 text-sm text-gray-600 hover:text-gray-800"
+                className="px-4 py-2 text-sm text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-colors"
               >
                 Cancel
               </button>
               <button
                 onClick={handleCreateNewProject}
-                className="px-3 py-2 text-sm bg-blue-500 text-white rounded hover:bg-blue-600"
+                className="px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 shadow-sm transition-colors"
               >
                 Create Project
               </button>
