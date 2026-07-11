@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Bot, Wrench, ArrowRight, ArrowLeft, Code, Server, Crown, Users, Globe, GitBranch, Search, X, Cpu } from 'lucide-react';
+import { Bot, Wrench, ArrowRight, ArrowLeft, Code, Server, Crown, Users, Globe, GitBranch, Search, X, Cpu, GitFork } from 'lucide-react';
 
 interface NodeTypeItem {
   type: string;
@@ -72,6 +72,16 @@ const nodeTypes: NodeTypeItem[] = [
     docUrl: 'https://strandsagents.com/docs/user-guide/concepts/multi-agent/graph/#custom-node-types',
     category: 'Multi-Agent',
     color: 'bg-teal-50 border-teal-200 hover:border-teal-400',
+  },
+  {
+    type: 'condition-node',
+    label: 'Condition',
+    icon: GitFork,
+    description: 'Conditional branching (if/else routing)',
+    tooltip: 'Routes execution based on conditions. Check if previous node output contains specific text, check status, or write custom Python logic. Has TRUE (green) and FALSE (red) output handles for branching paths.',
+    docUrl: 'https://strandsagents.com/docs/user-guide/concepts/multi-agent/graph/#conditional-edges',
+    category: 'Multi-Agent',
+    color: 'bg-yellow-50 border-yellow-200 hover:border-yellow-400',
   },
   {
     type: 'tool',

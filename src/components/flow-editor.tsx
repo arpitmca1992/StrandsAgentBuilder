@@ -36,6 +36,7 @@ import {
   A2AAgentNode,
   WorkflowNode,
   FunctionNode,
+  ConditionNode,
 } from './nodes';
 import { MCPToolNode } from './nodes/mcp-tool-node';
 import { isValidConnection } from '../lib/connection-validator';
@@ -55,6 +56,7 @@ const nodeTypes = {
   'a2a-agent': A2AAgentNode,
   workflow: WorkflowNode,
   'function-node': FunctionNode,
+  'condition-node': ConditionNode,
 };
 
 /** MiniMap node color by type */
@@ -252,6 +254,7 @@ export function FlowEditor({
       'a2a-agent': { label: 'A2A Agent', endpoint: '', timeout: 300 },
       workflow: { label: 'Workflow', workflowId: 'my_workflow', tasks: [] },
       'function-node': { label: 'Function', functionCode: 'def process(data: str) -> str:\n    """Process input data."""\n    return f"Processed: {data}"', description: 'Custom processing logic' },
+      'condition-node': { label: 'Condition', conditionType: 'output_contains', conditionValue: '', customCode: '' },
       tool: { label: 'Tool', toolType: 'built-in', toolName: 'calculator' },
       'mcp-tool': { label: 'MCP Server', serverName: 'mcp_server', transportType: 'stdio', command: 'uvx', args: ['server-name@latest'], argsText: 'server-name@latest', url: 'http://localhost:8000/mcp', timeout: 30, description: 'MCP server for external tools', env: {}, envText: '' },
       input: { label: 'User Input' },

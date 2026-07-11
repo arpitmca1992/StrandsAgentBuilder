@@ -13,6 +13,8 @@ import { ResizablePanel } from './resizable-panel';
 import { type StrandsProject, ProjectManager } from '../lib/project-manager';
 import { generateStrandsAgentCode } from '../lib/code-generator';
 import { validateFlow, type ValidationIssue } from '../lib/flow-validator';
+import { showToast, ToastRenderer } from './ui/simple-toast';
+import { useUndoRedo } from '../lib/use-undo-redo';
 
 // Auto-save key for localStorage
 const AUTOSAVE_FLOW_KEY = 'strands_autosave_flow';
@@ -60,6 +62,9 @@ export function MainLayout() {
   const [newProjectName, setNewProjectName] = useState('');
   const [newProjectDescription, setNewProjectDescription] = useState('');
   const [lastSaveTime, setLastSaveTime] = useState<Date | null>(null);
+
+  // Undo/Redo system
+  const { saveSnapshot, canUndo, canRedo } = useUndoRedo(nodes, edges, setNodes, setEdges);
 
   // Load current project on mount, or load auto-saved flow if no project
   useEffect(() => {
@@ -130,12 +135,12 @@ export function MainLayout() {
   }, [nodes]);
 
   const handleNodesChange = useCallback((newNodes: Node[]) => {
+    saveSnapshot();
     setNodes(newNodes);
-    // Clear selected node if it was deleted
     if (selectedNode && !newNodes.find(node => node.id === selectedNode.id)) {
       setSelectedNode(null);
     }
-  }, [selectedNode]);
+  }, [selectedNode, saveSnapshot]);
 
   const handleUpdateNode = useCallback((nodeId: string, data: any) => {
     setNodes((prevNodes) =>
@@ -184,7 +189,7 @@ export function MainLayout() {
       if (updated) {
         setCurrentProject(updated);
         setLastSaveTime(new Date());
-        /* toast removed */
+        showToast('Project saved', 'success');
       }
     } else {
       // Save as new project
@@ -207,7 +212,7 @@ export function MainLayout() {
           if (updated) {
             setCurrentProject(updated);
             setLastSaveTime(new Date());
-            /* toast removed */
+            
           }
         } else {
           setShowNewProjectDialog(true);
@@ -221,7 +226,7 @@ export function MainLayout() {
 
   const handleCreateNewProject = useCallback(() => {
     if (!newProjectName.trim()) {
-      /* toast removed */
+      
       return;
     }
 
@@ -257,7 +262,7 @@ export function MainLayout() {
     setLastSaveTime(null);
     ProjectManager.clearCurrentProject();
     clearAutoSavedFlow();
-    /* toast removed */
+    
   }, [nodes, edges]);
 
   const handleExportCurrentProject = useCallback(() => {
@@ -291,9 +296,9 @@ export function MainLayout() {
         setGraphMode(imported.graphMode || false);
         setLastSaveTime(new Date(imported.updatedAt));
         clearAutoSavedFlow();
-        /* toast removed */
+        
       } else {
-        /* toast removed */
+        
       }
     };
     reader.readAsText(file);
@@ -642,6 +647,8 @@ export function MainLayout() {
 
       {/* Welcome Overlay (first-time users) */}
 
+      {/* Toast Notifications */}
+      <ToastRenderer />
     </div>
   );
 }

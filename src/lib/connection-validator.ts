@@ -347,6 +347,64 @@ const connectionRules: ConnectionRule[] = [
     description: 'Workflow output can connect to output nodes',
   },
 
+  // CONDITION NODE connections (Graph Mode)
+  {
+    sourceType: 'agent',
+    sourceHandle: 'output',
+    targetType: 'condition-node',
+    targetHandle: 'input',
+    description: 'Agent output feeds into condition for branching',
+  },
+  {
+    sourceType: 'condition-node',
+    sourceHandle: 'true',
+    targetType: 'agent',
+    targetHandle: 'user-input',
+    description: 'Condition TRUE path goes to agent',
+  },
+  {
+    sourceType: 'condition-node',
+    sourceHandle: 'false',
+    targetType: 'agent',
+    targetHandle: 'user-input',
+    description: 'Condition FALSE path goes to agent',
+  },
+  {
+    sourceType: 'condition-node',
+    sourceHandle: 'true',
+    targetType: 'function-node',
+    targetHandle: 'input',
+    description: 'Condition TRUE path goes to function node',
+  },
+  {
+    sourceType: 'condition-node',
+    sourceHandle: 'false',
+    targetType: 'function-node',
+    targetHandle: 'input',
+    description: 'Condition FALSE path goes to function node',
+  },
+  {
+    sourceType: 'condition-node',
+    sourceHandle: 'true',
+    targetType: 'output',
+    targetHandle: 'input',
+    description: 'Condition TRUE path goes to output',
+  },
+  {
+    sourceType: 'condition-node',
+    sourceHandle: 'false',
+    targetType: 'output',
+    targetHandle: 'input',
+    description: 'Condition FALSE path goes to output',
+  },
+  {
+    sourceType: 'function-node',
+    sourceHandle: 'output',
+    targetType: 'condition-node',
+    targetHandle: 'input',
+    description: 'Function output feeds into condition',
+  },
+
 ];
 
 /**
