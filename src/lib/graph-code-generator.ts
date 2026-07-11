@@ -272,10 +272,12 @@ export function generateGraphCode(
       });
     }
 
-    // Find all agent nodes
+    // Find all agent nodes (includes all graph-capable node types)
     const agentNodes = nodes.filter(node =>
       (node.type === 'agent' || node.type === 'orchestrator-agent' || node.type === 'swarm')
     );
+    const a2aNodes = nodes.filter(node => node.type === 'a2a-agent');
+    const functionNodes = nodes.filter(node => node.type === 'function-node');
 
     const customToolNodes = nodes.filter(node => node.type === 'custom-tool');
     const mcpNodes = nodes.filter(node => node.type === 'mcp-tool');
@@ -351,6 +353,38 @@ export function generateGraphCode(
       code += `)\n\n`;
     });
 
+    // Generate A2A agent instances
+    if (a2aNodes.length > 0) {
+      imports.add('from strands.agent.a2a_agent import A2AAgent');
+      a2aNodes.forEach(a2aNode => {
+        const label = (a2aNode.data?.label as string) || 'a2a_agent';
+        const varName = sanitizePythonVariableName(label);
+        const endpoint = (a2aNode.data?.endpoint as string) || 'http://localhost:9000';
+        const timeout = (a2aNode.data?.timeout as number) || 300;
+        code += `# A2A Agent: ${label}\n`;
+        code += `${varName} = A2AAgent(\n`;
+        code += `    endpoint="${endpoint}",\n`;
+        code += `    timeout=${timeout}\n`;
+        code += `)\n\n`;
+      });
+    }
+
+    // Generate Function node instances
+    if (functionNodes.length > 0) {
+      functionNodes.forEach(funcNode => {
+        const label = (funcNode.data?.label as string) || 'function';
+        const varName = sanitizePythonVariableName(label);
+        const functionCode = (funcNode.data?.functionCode as string) || 'def process(data: str) -> str:\n    return data';
+        code += `# Function Node: ${label} (deterministic, no LLM)\n`;
+        code += `${functionCode}\n\n`;
+        // Create FunctionNode wrapper
+        const funcName = functionCode.match(/def\s+([a-zA-Z_]\w*)/)?.[1] || 'process';
+        code += `${varName} = FunctionNode(func=${funcName}, name="${varName}")\n\n`;
+      });
+      // Add FunctionNode import
+      imports.add('from strands.multiagent.base import MultiAgentBase');
+    }
+
     // Generate graph construction
     code += '# Graph Construction\n';
     code += 'builder = GraphBuilder()\n\n';
@@ -362,25 +396,42 @@ export function generateGraphCode(
       code += `builder.add_node(${nodeId}, "${nodeId}")\n`;
     });
 
+    // Add A2A agent nodes to graph
+    a2aNodes.forEach(a2aNode => {
+      const label = (a2aNode.data?.label as string) || 'a2a_agent';
+      const nodeId = sanitizePythonVariableName(label);
+      code += `builder.add_node(${nodeId}, "${nodeId}")\n`;
+    });
+
+    // Add Function nodes to graph
+    functionNodes.forEach(funcNode => {
+      const label = (funcNode.data?.label as string) || 'function';
+      const nodeId = sanitizePythonVariableName(label);
+      code += `builder.add_node(${nodeId}, "${nodeId}")\n`;
+    });
+
     code += '\n';
 
-    // Add edges to graph (agent→agent dependency connections)
+    // Add edges to graph (all graph node→node dependency connections)
+    const graphNodeTypes = ['agent', 'orchestrator-agent', 'swarm', 'a2a-agent', 'function-node'];
+    const allGraphNodes = [...agentNodes, ...a2aNodes, ...functionNodes];
+
     const graphEdges = edges.filter(edge => {
       const sourceNode = nodes.find(n => n.id === edge.source);
       const targetNode = nodes.find(n => n.id === edge.target);
       return sourceNode && targetNode &&
-             (sourceNode.type === 'agent' || sourceNode.type === 'orchestrator-agent' || sourceNode.type === 'swarm') &&
-             (targetNode.type === 'agent' || targetNode.type === 'orchestrator-agent' || targetNode.type === 'swarm') &&
+             graphNodeTypes.includes(sourceNode.type || '') &&
+             graphNodeTypes.includes(targetNode.type || '') &&
              edge.sourceHandle === 'output' &&
-             edge.targetHandle === 'user-input';
+             (edge.targetHandle === 'user-input' || edge.targetHandle === 'input');
     });
 
     graphEdges.forEach(edge => {
-      const sourceNode = agentNodes.find(n => n.id === edge.source);
-      const targetNode = agentNodes.find(n => n.id === edge.target);
+      const sourceNode = allGraphNodes.find(n => n.id === edge.source);
+      const targetNode = allGraphNodes.find(n => n.id === edge.target);
       if (sourceNode && targetNode) {
-        const sourceId = sanitizePythonVariableName((sourceNode.data?.label as string) || 'agent');
-        const targetId = sanitizePythonVariableName((targetNode.data?.label as string) || 'agent');
+        const sourceId = sanitizePythonVariableName((sourceNode.data?.label as string) || 'node');
+        const targetId = sanitizePythonVariableName((targetNode.data?.label as string) || 'node');
         code += `builder.add_edge("${sourceId}", "${targetId}")\n`;
       }
     });

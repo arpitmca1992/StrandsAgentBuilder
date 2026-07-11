@@ -229,6 +229,124 @@ const connectionRules: ConnectionRule[] = [
     description: 'Swarm to swarm dependency (Graph Mode)',
   },
 
+  // A2A AGENT in GRAPH MODE
+  {
+    sourceType: 'a2a-agent',
+    sourceHandle: 'output',
+    targetType: 'agent',
+    targetHandle: 'user-input',
+    description: 'A2A agent to agent dependency (Graph Mode)',
+  },
+  {
+    sourceType: 'agent',
+    sourceHandle: 'output',
+    targetType: 'a2a-agent',
+    targetHandle: 'input',
+    description: 'Agent to A2A agent dependency (Graph Mode)',
+  },
+  {
+    sourceType: 'a2a-agent',
+    sourceHandle: 'output',
+    targetType: 'orchestrator-agent',
+    targetHandle: 'user-input',
+    description: 'A2A agent to orchestrator dependency (Graph Mode)',
+  },
+  {
+    sourceType: 'orchestrator-agent',
+    sourceHandle: 'output',
+    targetType: 'a2a-agent',
+    targetHandle: 'input',
+    description: 'Orchestrator to A2A agent dependency (Graph Mode)',
+  },
+  {
+    sourceType: 'a2a-agent',
+    sourceHandle: 'output',
+    targetType: 'a2a-agent',
+    targetHandle: 'input',
+    description: 'A2A agent to A2A agent dependency (Graph Mode)',
+  },
+  {
+    sourceType: 'input',
+    sourceHandle: 'output',
+    targetType: 'a2a-agent',
+    targetHandle: 'input',
+    description: 'Input can provide user input to A2A agent',
+  },
+  {
+    sourceType: 'a2a-agent',
+    sourceHandle: 'output',
+    targetType: 'output',
+    targetHandle: 'input',
+    description: 'A2A agent output can connect to output nodes',
+  },
+
+  // FUNCTION NODE in GRAPH MODE
+  {
+    sourceType: 'function-node',
+    sourceHandle: 'output',
+    targetType: 'agent',
+    targetHandle: 'user-input',
+    description: 'Function node output feeds into agent (Graph Mode)',
+  },
+  {
+    sourceType: 'agent',
+    sourceHandle: 'output',
+    targetType: 'function-node',
+    targetHandle: 'input',
+    description: 'Agent output feeds into function node (Graph Mode)',
+  },
+  {
+    sourceType: 'function-node',
+    sourceHandle: 'output',
+    targetType: 'function-node',
+    targetHandle: 'input',
+    description: 'Function node chain (Graph Mode)',
+  },
+  {
+    sourceType: 'function-node',
+    sourceHandle: 'output',
+    targetType: 'orchestrator-agent',
+    targetHandle: 'user-input',
+    description: 'Function to orchestrator dependency (Graph Mode)',
+  },
+  {
+    sourceType: 'function-node',
+    sourceHandle: 'output',
+    targetType: 'a2a-agent',
+    targetHandle: 'input',
+    description: 'Function to A2A agent dependency (Graph Mode)',
+  },
+  {
+    sourceType: 'input',
+    sourceHandle: 'output',
+    targetType: 'function-node',
+    targetHandle: 'input',
+    description: 'Input can feed into function node',
+  },
+  {
+    sourceType: 'function-node',
+    sourceHandle: 'output',
+    targetType: 'output',
+    targetHandle: 'input',
+    description: 'Function node can connect to output',
+  },
+
+  // WORKFLOW NODE connections
+  {
+    sourceType: 'input',
+    sourceHandle: 'output',
+    targetType: 'workflow',
+    targetHandle: 'input',
+    description: 'Input can provide user input to workflow',
+  },
+  {
+    sourceType: 'workflow',
+    sourceHandle: 'output',
+    targetType: 'output',
+    targetHandle: 'input',
+    description: 'Workflow output can connect to output nodes',
+  },
+
 ];
 
 /**
@@ -415,48 +533,52 @@ export function isValidConnection(
 
   // In graph mode, enforce special rules
   if (graphMode) {
-    // Rule 1: Input nodes can ONLY connect to entry point agents (agents with no incoming dependencies)
-    if (sourceNode.type === 'input' &&
-        (targetNode.type === 'agent' || targetNode.type === 'orchestrator-agent' || targetNode.type === 'swarm')) {
+    // All graph-capable node types
+    const graphNodeTypes = ['agent', 'orchestrator-agent', 'swarm', 'a2a-agent', 'function-node'];
 
-      // Check if target agent has incoming dependencies from other agents
-      const hasIncomingAgentDependencies = edges.some(edge => {
+    // Rule 1: Input nodes can ONLY connect to entry point nodes (nodes with no incoming dependencies)
+    if (sourceNode.type === 'input' && graphNodeTypes.includes(targetNode.type)) {
+      const hasIncomingDependencies = edges.some(edge => {
         const edgeSource = nodes.find(n => n.id === edge.source);
         return edge.target === targetNode.id &&
-               (edgeSource?.type === 'agent' || edgeSource?.type === 'orchestrator-agent' || edgeSource?.type === 'swarm') &&
-               edge.sourceHandle === 'output' &&
-               edge.targetHandle === 'user-input';
+               edgeSource && graphNodeTypes.includes(edgeSource.type || '') &&
+               edge.sourceHandle === 'output';
       });
 
-      if (hasIncomingAgentDependencies) {
+      if (hasIncomingDependencies) {
         return {
           valid: false,
-          message: 'Input nodes can only connect to entry point agents (agents with no incoming dependencies from other agents).'
+          message: 'Input nodes can only connect to entry point nodes (nodes with no incoming dependencies from other graph nodes).'
         };
       }
     }
 
-    // Rule 2: Validate agent→agent connections for cycles
-    if ((sourceNode.type === 'agent' || sourceNode.type === 'orchestrator-agent' || sourceNode.type === 'swarm') &&
-        (targetNode.type === 'agent' || targetNode.type === 'orchestrator-agent' || targetNode.type === 'swarm') &&
+    // Rule 2: Validate graph node→node connections for cycles (unless allowCycles is enabled)
+    if (graphNodeTypes.includes(sourceNode.type) && graphNodeTypes.includes(targetNode.type) &&
         connection.sourceHandle === 'output' &&
-        connection.targetHandle === 'user-input') {
+        (connection.targetHandle === 'user-input' || connection.targetHandle === 'input')) {
 
-      // Simulate the connection and check for cycles
-      const simulatedEdges = [...edges, {
-        id: 'temp',
-        source: connection.source,
-        target: connection.target,
-        sourceHandle: connection.sourceHandle,
-        targetHandle: connection.targetHandle,
-      } as Edge];
+      // Check if allowCycles is enabled on the graph-builder node
+      const graphBuilderNode = nodes.find(n => n.type === 'graph-builder');
+      const allowCycles = graphBuilderNode?.data?.allowCycles === true;
 
-      const cycles = detectCycles(nodes, simulatedEdges);
-      if (cycles.length > 0) {
-        return {
-          valid: false,
-          message: 'This connection would create a circular dependency. Graphs must be acyclic (DAG).'
-        };
+      if (!allowCycles) {
+        // Simulate the connection and check for cycles
+        const simulatedEdges = [...edges, {
+          id: 'temp',
+          source: connection.source,
+          target: connection.target,
+          sourceHandle: connection.sourceHandle,
+          targetHandle: connection.targetHandle,
+        } as Edge];
+
+        const cycles = detectCycles(nodes, simulatedEdges);
+        if (cycles.length > 0) {
+          return {
+            valid: false,
+            message: 'This connection would create a cycle. Enable "Allow Cycles" in Graph Builder properties for feedback loop support, or restructure your graph.'
+          };
+        }
       }
     }
   }
