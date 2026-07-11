@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import Editor from '@monaco-editor/react';
 import { type Node, type Edge } from '@xyflow/react';
+import { showToast } from './ui/simple-toast';
 import { Download, Copy, CheckCircle, Container, AlertCircle, Edit3, RotateCcw, History, ChevronDown, ChevronUp, Trash2, Plus, X, Eye, EyeOff } from 'lucide-react';
 import { generateStrandsAgentCode } from '../lib/code-generator';
 import { type DeploymentHistoryItem } from '../lib/api-client';
@@ -403,7 +404,7 @@ export function ECSDeployPanel({ nodes, edges, graphMode: _graphMode, className 
     }
 
     if (errors.length > 0) {
-      alert('Please fix the code generation errors before deploying.');
+      showToast('Please fix the code generation errors before deploying', 'error');
       return;
     }
 
@@ -545,7 +546,7 @@ export function ECSDeployPanel({ nodes, edges, graphMode: _graphMode, className 
       localStorage.setItem('ecs_deployments', JSON.stringify(updated));
     } catch (error) {
       console.error('Failed to delete deployment:', error);
-      alert('Failed to delete deployment. Please try again.');
+      showToast('Failed to delete deployment', 'error');
     }
   };
 

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Play, RefreshCw, X, Trash2, AlertTriangle, Cloud, Zap, Waves, Server } from 'lucide-react';
+import { showToast } from './ui/simple-toast';
 
 interface AgentCoreDeployment {
   agent_runtime_arn: string;
@@ -588,7 +589,7 @@ export function InvokePanel({ className = '' }: InvokePanelProps) {
       // Show error to user
       const typeLabel = deploymentType === 'agentcore' ? 'AgentCore runtime' :
                        deploymentType === 'lambda' ? 'Lambda deployment' : 'ECS Fargate deployment';
-      alert(`Failed to delete ${typeLabel}: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      showToast(`Failed to delete ${typeLabel}`, 'error');
     }
   };
 
@@ -629,7 +630,7 @@ export function InvokePanel({ className = '' }: InvokePanelProps) {
       }
     } catch (error) {
       console.error('Failed to delete agent:', error);
-      alert(`Failed to delete agent: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      showToast('Failed to delete agent', 'error');
     }
   };
 

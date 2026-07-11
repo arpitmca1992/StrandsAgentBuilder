@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { Clock, CheckCircle, XCircle, Search, Filter, Rocket, Eye, Trash2, Server, Cloud } from 'lucide-react';
+import { showToast } from './ui/simple-toast';
 import {
   apiClient,
   type DeploymentHistoryItem,
@@ -128,7 +129,7 @@ export function DeploymentHistory({
       setDeployments(prev => prev.filter(d => d.deployment_id !== deploymentId));
     } catch (err) {
       console.error('Error deleting deployment:', err);
-      alert('Failed to delete deployment record');
+      showToast('Failed to delete deployment record', 'error');
     }
   };
 

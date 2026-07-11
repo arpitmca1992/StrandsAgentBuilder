@@ -62,6 +62,7 @@ export function MainLayout() {
   const [newProjectName, setNewProjectName] = useState('');
   const [newProjectDescription, setNewProjectDescription] = useState('');
   const [lastSaveTime, setLastSaveTime] = useState<Date | null>(null);
+  const [showConfirmNewProject, setShowConfirmNewProject] = useState(false);
 
   // Undo/Redo system
   const { saveSnapshot, canUndo, canRedo } = useUndoRedo(nodes, edges, setNodes, setEdges);
@@ -250,10 +251,10 @@ export function MainLayout() {
 
   const handleNewProject = useCallback(() => {
     if (nodes.length > 0 || edges.length > 0) {
-      // Use a state-driven confirmation instead of native confirm()
-      const confirmed = window.confirm('Creating a new project will clear the current flow. Continue?');
-      if (!confirmed) return;
+      setShowConfirmNewProject(true);
+      return;
     }
+    // Empty canvas — no confirmation needed
     setNodes([]);
     setEdges([]);
     setSelectedNode(null);
@@ -262,8 +263,21 @@ export function MainLayout() {
     setLastSaveTime(null);
     ProjectManager.clearCurrentProject();
     clearAutoSavedFlow();
-    
+    showToast('New project created', 'info');
   }, [nodes, edges]);
+
+  const confirmNewProject = useCallback(() => {
+    setNodes([]);
+    setEdges([]);
+    setSelectedNode(null);
+    setGraphMode(false);
+    setCurrentProject(null);
+    setLastSaveTime(null);
+    ProjectManager.clearCurrentProject();
+    clearAutoSavedFlow();
+    setShowConfirmNewProject(false);
+    showToast('New project created', 'info');
+  }, []);
 
   const handleExportCurrentProject = useCallback(() => {
     if (currentProject) {
@@ -649,6 +663,42 @@ export function MainLayout() {
 
       {/* Toast Notifications */}
       <ToastRenderer />
+
+      {/* Confirm New Project Modal */}
+      {showConfirmNewProject && (
+        <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl shadow-2xl border border-gray-200 p-6 w-96 mx-4">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center flex-shrink-0">
+                <span className="text-lg">⚠️</span>
+              </div>
+              <div>
+                <h4 className="text-base font-semibold text-gray-900">Start New Project?</h4>
+                <p className="text-xs text-gray-500 mt-0.5">This action cannot be undone</p>
+              </div>
+            </div>
+
+            <p className="text-sm text-gray-600 mb-6">
+              Creating a new project will clear your current flow. All unsaved changes will be lost.
+            </p>
+
+            <div className="flex justify-end gap-2">
+              <button
+                onClick={() => setShowConfirmNewProject(false)}
+                className="px-4 py-2 text-sm text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmNewProject}
+                className="px-4 py-2 text-sm bg-amber-600 text-white rounded-lg hover:bg-amber-700 shadow-sm transition-colors"
+              >
+                Clear & Create New
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
