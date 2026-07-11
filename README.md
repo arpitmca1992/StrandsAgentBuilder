@@ -24,6 +24,197 @@ mcp, agent-orchestration, ai-workflow, code-generation
 
 ---
 
+## ⭐ Highlights — Ready-to-Use Templates
+
+Start building immediately with **8 pre-built templates** from real-world patterns:
+
+| Template | Pattern | Source | Features Used |
+|----------|---------|--------|---------------|
+| 🎮 **Pokemon Battle Orchestrator** | Agents-as-Tools | [Itsuki's Article](https://levelup.gitconnected.com/strands-agents-interesting-multi-agent-pattern-0c7f97088b6d) | Routing prompt, multi-specialist delegation |
+| 🐝 **Pokemon Swarm Team** | Swarm (Autonomous) | [Itsuki's Article](https://levelup.gitconnected.com/strands-agents-interesting-multi-agent-pattern-0c7f97088b6d) | 4 agents, handoff detection, shared context |
+| 📊 **Pokemon Research Graph** | Graph (Parallel) | [Itsuki's Article](https://levelup.gitconnected.com/strands-agents-interesting-multi-agent-pattern-0c7f97088b6d) | Fan-out to specialists → aggregation |
+| 🏭 **Production-Ready Agent** | Single Agent (Full) | [Strands SDK](https://strandsagents.com/) | Guardrails, OTEL, Memory, SOPs, Retry, Session, HITL |
+| 🔄 **Writer-Reviewer Loop** | Graph (Cyclic) | [Strands Graph Docs](https://strandsagents.com/docs/user-guide/concepts/multi-agent/graph/) | Feedback loop, conditional routing |
+| 🌐 **Distributed ML Pipeline** | A2A + Graph | [Strands A2A Docs](https://strandsagents.com/docs/user-guide/concepts/multi-agent/agent-to-agent/) | Remote agents, parallel processing |
+| 🔍 **MCP Research Agent** | Single + MCP | [Strands MCP Docs](https://strandsagents.com/docs/user-guide/concepts/tools/mcp-tools/) | Multiple MCP servers, streaming |
+| 📋 **Data Analysis Workflow** | Workflow DAG | [Strands Workflow Docs](https://strandsagents.com/docs/user-guide/concepts/multi-agent/workflow/) | Task dependencies, parallel execution |
+
+Templates load from MySQL database via API. Click **Open → Templates** to use them.
+
+---
+
+## Features
+
+### Visual Flow Editor
+- Drag-and-drop canvas with snap-to-grid
+- 13 node types covering the full Strands SDK
+- Auto-layout (5 arrangements: Horizontal, Vertical, Radial, Grid, Shuffle)
+- Connection-aware layouts using topological sorting
+- Semantic edge labels (tool, depends, ✓ true, ✗ false)
+- Colored MiniMap with node-type identification
+- Quick-add toolbar for one-click node creation
+- Keyboard shortcuts (Ctrl+S save, Ctrl+Z undo, Delete, shortcuts panel)
+
+### Multi-Agent Patterns (All 5 Strands Patterns)
+- **Agent** — Single LLM agent with tools
+- **Orchestrator** — Agents-as-Tools hierarchical delegation
+- **Swarm** — Autonomous handoff with shared context
+- **Graph** — Deterministic DAG with conditional edges, cycles, parallel execution
+- **Workflow** — Task DAG with dependencies and parallel execution
+- **A2A Agent** — Remote Agent-to-Agent protocol
+- **Function Node** — Deterministic Python (no LLM) for graph pipelines
+- **Condition Node** — If/else branching in graphs
+
+### 15+ Model Providers
+AWS Bedrock, OpenAI, Anthropic, Google Gemini, Ollama, LiteLLM, MistralAI, SageMaker, LlamaAPI, llama.cpp, Writer, Vercel, Amazon Nova, Custom Provider
+
+### Agent Configuration (Full SDK Coverage)
+- Retry Strategy (max attempts, exponential backoff)
+- Conversation Manager (Sliding Window, Summarizing, Null)
+- Session Manager (File, S3)
+- Invocation Limits (max turns, token budget)
+- Structured Output (Pydantic schema)
+- Goal Loop Plugin (autonomous iteration)
+- Human-in-the-Loop (approval gates)
+- Community Tools Catalog (19+ tools)
+- MCP Instrumentation (OTEL for tool calls)
+
+### Safety & Security
+- **Bedrock Guardrails** — Content filtering, PII redaction, topic blocking
+- **Agent Control** — Runtime guardrails plugin (Galileo)
+- **Custom Hook Guardrails** — Notify-only or blocking mode
+- Input sanitization (OWASP compliant codegen)
+- No hardcoded secrets (all via environment variables)
+
+### Observability
+- **OpenTelemetry** — Distributed tracing (OTLP/gRPC, OTLP/HTTP, Console)
+- Service name, sampling rate, auth headers configuration
+- **Agent SOPs** — Markdown-based workflow definitions
+- Execution trace waterfall view
+
+### Memory & Context
+- **Bedrock Knowledge Base** (RAG)
+- **Mem0** (Conversational memory)
+- Custom memory stores
+
+### Code Generation
+- Full Python code from visual flows
+- Bidirectional code editing (generate ↔ edit)
+- Syntax validation for custom tools
+- Flow validation with navigate-to-node
+- Copy to clipboard, download as .py
+
+### Interactive Execution
+- Single-turn execution with streaming
+- Multi-turn chat with conversation history
+- Live WebSocket updates
+- Execution history with artifacts
+
+### One-Click Deployment
+- **AWS Bedrock AgentCore** — Managed agent runtime
+- **AWS Lambda** — Serverless functions
+- **ECS Fargate** — Container-based
+- Auth configuration (IAM/Cognito/API Key)
+- Deploy progress stepper
+
+### UX & Accessibility
+- Welcome onboarding overlay
+- Toast notification system (no native alerts)
+- Themed confirmation modals
+- Validation indicators on nodes (red/amber badges with hover tooltips)
+- Property panel with contextual help tooltips
+- Node palette with documentation links to Strands docs
+- Undo/Redo (Ctrl+Z / Ctrl+Shift+Z)
+- Responsive layout with fixed header/sidebar
+
+---
+
+## Quick Start
+
+### Environment Setup
+
+1. Install [Node.js 22](https://nodejs.org/en/download)
+2. Install [uv](https://docs.astral.sh/uv/getting-started/installation/)
+3. Install frontend dependencies:
+```bash
+npm install
+```
+4. Install backend dependencies:
+```bash
+cd backend
+uv sync
+```
+
+### Development
+```bash
+# Start frontend
+npm run dev
+
+# Start backend (new terminal)
+cd backend
+uv run uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+
+# Access at http://localhost:5173
+```
+
+### Database Setup (MySQL — for templates)
+```sql
+CREATE DATABASE strands_builder CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+```
+Then run migrations in order:
+```bash
+mysql -u root strands_builder < backend/db/migrations/001_create_templates_table.sql
+mysql -u root strands_builder < backend/db/migrations/002_seed_official_templates.sql
+mysql -u root strands_builder < backend/db/migrations/005_seed_rich_templates.sql
+```
+
+---
+
+## Tech Stack
+
+- **Frontend**: React 19, TypeScript, Vite, Tailwind CSS, XYFlow (React Flow)
+- **Backend**: FastAPI, Python, Uvicorn
+- **Database**: MySQL 8 (templates, projects, evaluations)
+- **AI Framework**: Strands Agents SDK (Python)
+- **Deployment**: AWS (AgentCore, Lambda, ECS Fargate)
+
+---
+
+## Architecture
+
+```
+┌─────────────────┐         ┌─────────────────┐         ┌──────────────┐
+│  React Frontend │  API    │  FastAPI Backend │  SQL    │   MySQL DB   │
+│  (Visual Editor)│ ──────→ │  (Code Exec +   │ ──────→ │  (Templates, │
+│  Port 5173      │         │   Deploy + Chat) │         │   Projects)  │
+│                 │ ←────── │  Port 8000       │ ←────── │              │
+└─────────────────┘         └─────────────────┘         └──────────────┘
+```
+
+---
+
+## Roadmap (✅ = Complete)
+
+### Nodes
+- [x] Input, Output, Agent, Orchestrator, MCP Server, Built-in Tool, Custom Tool
+- [x] Swarm, A2A Agent, Workflow, Function Node, Condition Node
+- [x] Structured Output (via Agent Config)
+
+### Multi-Agent Flows
+- [x] Single agent, Agents-as-Tools, Graph mode (cycles + conditions), Swarm mode
+
+### Configuration (Full Strands SDK)
+- [x] 15+ Model Providers, Retry, Conversation/Session Manager, Limits
+- [x] Guardrails (Bedrock + Agent Control + Custom Hooks)
+- [x] OpenTelemetry, Agent SOPs, Memory (Bedrock KB, Mem0)
+- [x] Goal Loop, Human-in-the-Loop, Community Tools
+
+### Deployment
+- [x] One-click: AgentCore, Lambda, ECS Fargate
+- [x] Auth config (IAM/Cognito/API Key), Deploy stepper
+
+---
+
 ## ⚠️ Legal Disclaimers & Compliance
 
 ### Not an Official Product
@@ -86,352 +277,3 @@ Users of this tool are responsible for ensuring their AI agents comply with:
 - Applicable laws and regulations (GDPR, CCPA, etc.)
 - AWS Acceptable Use Policy (if deploying to AWS)
 - Model provider terms of service (OpenAI, Anthropic, Google, etc.)
-
----
-
-## Features
-
-- **Visual Flow Editor**: Drag-and-drop interface for building agent workflows
-- **Multi-Agent Support**: Create complex hierarchical agent workflows with orchestrator agents that coordinate sub-agents
-- **Interactive Chat Interface**: Chat directly with your agents using full conversation history, streaming responses, and contextual memory across conversations
-- **MCP Server Integration**: Connect to Model Context Protocol servers for extended tool capabilities
-- **Custom Tool Nodes**: Define your own Python functions as reusable tools with @tool decorator
-- **Multiple Model Providers**: Support for AWS Bedrock and OpenAI-compatible API endpoints
-- **Code Generation**: Automatically generates Python code from visual flows
-- **Real-time Execution**: Execute agents with streaming support and live updates
-- **Project Management**: Save, load, and manage multiple agent projects with persistent local storage
-- **Execution History**: Track and replay previous agent runs
-- **One-Click Deployment**: Deploy agents to AWS Bedrock AgentCore / AWS Lambda Function/ ECS Fargate with a single click
-
-## Demos
-### Video
-- Youtube: [Build AI Agent Teams Visually - No Code Required! 🤖 | Strands Agent Builder](https://www.youtube.com/watch?v=lE6y6jM0b1Y)
-- Wechat: [一款专为Strands Agent打造的无代码可视化编排工具](https://mp.weixin.qq.com/s/5KjbVRKAAGrRYQudLqlevg)
-
-### 1. A single agent with MCP, builtin tool, custom tool
-![alt text](assets/image-1.png)
-
-### 2. Hierarchy multi agents code generation
-![alt text](assets/image-code.png)
-
-### 3. Graph Mode
-![alt text](assets/graph-mode.png)
-
-### 4. Swarm Agents
-![alt text](assets/swarm-mode.png)
-
-### 5. Interactive Chat with Agent
-![Interactive Chat Interface](assets/chat-demo.png)
-
-### 6. Hierarchy multi agents execution
-![alt text](assets/image.png)
-
-### 7. Deploy to Bedrock AgentCore
-![alt text](assets/agentcore_deploy.png)
-
-### 8. Deploy to Lambda
-![alt text](assets/lambda_deploy.png)
-
-### 9. Deploy to ECS Fargate
-![alt text](assets/ecs_deploy.png)
-
-### 9. Invoke Cloud
-![alt text](assets/invoke_cloud.png)
-![alt text](assets/invoke_cloud2.png)
-
-## Quick Start
-
-### Envrionment Setup
-
-1. Install [Node Js 22](https://nodejs.org/en/download) 
-2. Install [uv](https://docs.astral.sh/uv/getting-started/installation/)
-3. Install all frontent dependencies in the project folder
-```bash
-npm install
-```
-4.  Install all backend dependencies in the project folder
-```bash 
-cd backend
-uv sync
-```
-
-5. Install AWS CLI
-https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html
-
-6. (Optional) intall `aws-sam-cli` and `docker` for Lambda deployment
-```bash
-uv pip install aws-sam-cli
-```
-
-install Docker  
-```bash
-curl -fsSL https://get.docker.com -o get-docker.sh
-sudo sh get-docker.sh
-sudo systemctl enable docker && sudo systemctl start docker && sudo usermod -aG docker ubuntu
-sudo chmod 666 /var/run/docker.sock
-```
-
-### Development
-```bash
-# Start frontend development server
-npm run dev
-
-# Start backend server
-npm run backend:dev
-
-# Run both frontend and backend
-npm run dev:full
-```
-### Try Interactive Chat Mode
-1. Build any agent flow with input/output nodes
-2. Click "Chat with Agent" in the execution panel
-3. Have a natural conversation with your agent using streaming responses and full conversation history
-
-### Play with sample flow
-Download this sample [Flow](https://github.com/arpitmca1992/StrandsAgentBuilder/blob/main/assets/aws_knowledge_mcp_agent.json) and import to the UI, and experience it.
-![alt text](assets/sample_image.png)
-
-### Production Deployment
-
-#### Quick Start (Recommended)
-```bash
-# Start all services in production mode
-./start_all.sh
-
-# Stop all services
-./stop_all.sh
-```
-
-#### Manual Commands
-```bash
-# Build for production
-npm run build
-
-# Build and preview frontend
-npm run preview
-
-# Start backend in production mode
-cd backend && uv run uvicorn main:app --host 0.0.0.0 --port 8000
-
-# Or use the npm script
-npm run backend:prod
-```
-
-#### Production Features
-- **Automated Setup**: `start_all.sh` handles dependency installation, building, and service startup
-- **Background Execution**: Services run in the background with proper logging
-- **Health Checks**: Automatic verification that services started successfully
-- **Port Management**: Checks for port conflicts and provides warnings
-- **Graceful Shutdown**: `stop_all.sh` properly stops all services and cleans up processes
-- **Log Management**: Centralized logging in `logs/` directory
-- **Secure Proxy Architecture**: Backend only accessible internally via Vite proxy
-- **Single Port Exposure**: Only frontend port (5173) needs to be exposed
-- **Cloud Deployment**: Auto-detects public IP for EC2 deployment
-- **ALB Support**: Compatible with AWS Application Load Balancer
-
-#### Deployment Architecture
-
-The application uses a **secure proxy architecture** where:
-- **Frontend** (port 5173): Publicly accessible, serves the React application
-- **Backend** (port 8000): Internal only, proxied through frontend
-- **All API requests** are automatically routed through the frontend to backend
-- **Only port 5173** needs to be exposed in firewalls/security groups
-
-#### Deployment Scenarios
-
-##### Local Development
-```bash
-./start_all.sh
-# Access: http://localhost:5173
-# API Docs: http://localhost:5173/docs
-```
-
-##### Direct EC2 Deployment
-```bash
-./start_all.sh
-# Auto-detects public IP (e.g., http://35.88.128.160:5173)
-# API Docs: http://35.88.128.160:5173/docs
-```
-
-##### AWS ALB Deployment
-```bash
-export ALB_HOSTNAME=your-alb-hostname.us-west-2.elb.amazonaws.com
-./start_all.sh
-# Access: http://your-alb-hostname.us-west-2.elb.amazonaws.com:5173
-# API Docs: http://your-alb-hostname.us-west-2.elb.amazonaws.com:5173/docs
-```
-
-#### Network Configuration
-
-**Security Groups / Firewall Rules:**
-- **Inbound**: Only allow port 5173 (frontend)
-- **Port 8000**: Not exposed externally (backend is internal-only)
-
-**Access URLs:**
-- **Application**: `http://YOUR_HOST:5173`
-- **API Documentation**: `http://YOUR_HOST:5173/docs` (proxied to backend)
-- **Health Check**: `http://YOUR_HOST:5173/health` (proxied to backend)
-
-#### Log Files
-- Frontend logs: `logs/frontend.log`
-- Backend logs: `logs/backend.log`
-
-## Agent Deployment
-
-The Strands Agent Builder now supports **one-click deployment** of your agent workflows to AWS infrastructure, making it easy to move from development to production.
-
-### Deployment Options
-
-#### 1. AWS Bedrock AgentCore Deployment
-
-Deploy your agent as a **Bedrock AgentCore** agent for serverless, managed AI agent execution.
-
-**Features:**
-- Fully managed agent runtime by AWS Bedrock
-- Automatic scaling and high availability
-- Integrated with AWS services (S3, DynamoDB, Lambda)
-- Pay-per-use pricing model
-- Built-in monitoring and logging via CloudWatch
-
-**How to Deploy:**
-1. Build your agent workflow in the visual editor
-2. Click the "Deploy to AgentCore" button in the execution panel
-3. Configure deployment settings (agent name, IAM role, etc.)
-4. The system will automatically:
-   - Generate the agent code
-   - Package dependencies
-   - Create CloudFormation stack
-   - Deploy to Bedrock AgentCore
-   - Provide the agent ARN for invocation
-
-**Requirements:**
-- AWS credentials configured (via AWS CLI or environment variables)
-- Appropriate IAM permissions for Bedrock and CloudFormation
-- Bedrock AgentCore enabled in your AWS region
-
-#### 2. AWS Lambda Function Deployment
-
-Deploy your agent as an **AWS Lambda Function** for serverless execution with HTTP API access.
-
-**Features:**
-- Serverless compute with automatic scaling
-- HTTP API endpoint for agent invocation
-- Support for synchronous and asynchronous execution
-- Integration with API Gateway, EventBridge, and other AWS services
-- Cost-effective pay-per-request pricing
-- Built-in monitoring via CloudWatch Logs
-
-**How to Deploy:**
-1. Build your agent workflow in the visual editor
-2. Click the "Deploy to Lambda" button in the execution panel
-3. Configure deployment settings (function name, memory, timeout, etc.)
-4. The system will automatically:
-   - Generate the agent code with Lambda handler
-   - Package dependencies into deployment package
-   - Create CloudFormation stack with Lambda function and IAM role
-   - Deploy to AWS Lambda
-   - Provide the function ARN and invocation URL
-
-**Requirements:**
-- AWS credentials configured (via AWS CLI or environment variables)
-- Appropriate IAM permissions for Lambda, IAM, and CloudFormation
-- Sufficient Lambda quotas in your AWS account
-
-### Deployment Architecture
-
-Both deployment options use **AWS CloudFormation** for infrastructure as code, ensuring:
-- Reproducible deployments
-- Version control for infrastructure
-- Easy rollback capabilities
-- Automated resource cleanup
-
-The deployment process:
-1. **Code Generation**: Converts visual flow to production-ready Python code
-2. **Dependency Packaging**: Bundles all required packages (Strands SDK, tools, etc.)
-3. **CloudFormation Stack Creation**: Provisions AWS resources (Lambda/AgentCore, IAM roles, etc.)
-4. **Deployment**: Uploads code and creates the agent/function
-5. **Validation**: Verifies successful deployment and provides invocation details
-
-### Managing Deployments
-
-**View Deployment Status:**
-- Use the AWS Console to monitor CloudFormation stacks
-- Check CloudWatch Logs for execution logs
-- View Lambda/AgentCore metrics in CloudWatch
-
-**Update Deployment:**
-- Make changes to your agent workflow
-- Click deploy again with the same stack name to update
-
-**Delete Deployment:**
-- Delete the CloudFormation stack via AWS Console or CLI
-- All associated resources will be cleaned up automatically
-
-### Best Practices
-
-1. **Use Separate AWS Accounts/Regions**: Deploy dev/staging/prod environments separately
-2. **Configure Timeouts**: Set appropriate Lambda timeout values based on agent complexity
-3. **Monitor Costs**: Use AWS Cost Explorer to track deployment costs
-4. **Enable Logging**: CloudWatch Logs are enabled by default for debugging
-5. **Secure Credentials**: Use IAM roles instead of hardcoded credentials in agent code
-6. **Test Locally First**: Validate your agent workflow in the Studio before deploying
-
-## Tech Stack
-
-- **Frontend**: React 19, TypeScript, Vite, Tailwind CSS, XYFlow
-- **Backend**: FastAPI, Python, Uvicorn
-- **AI Agents**: Strands Agent SDK with support for AWS Bedrock and OpenAI-compatible models
-
-## Architecture
-
-The application consists of a React frontend for the visual editor and a FastAPI backend for code execution and conversation management. Projects are stored locally in the browser, while execution artifacts and conversation sessions are managed by the backend's file-based storage system. The chat interface provides real-time interaction with agents using full conversation history and streaming responses.
-
-## Roadmap
-### Nodes
-- [x] Input Node
-- [x] Output Node
-- [x] Single Agent Node
-- [x] Orchestrator Agent Node
-- [x] MCP server node
-- [x] Built tool node
-- [x] Custom tool node
-- [x] Swarm Agent Node
-- [x] Structured Output (via Agent Config)
-- [x] Condition Node (Graph Mode)
-- [x] A2A Agent Node
-- [x] Workflow Node
-- [x] Function Node (deterministic, no LLM)
-
-### Flows
-- [x] Single agent mode
-- [x] Agents as tool mode
-- [x] Graph mode (with cycles, conditions, custom nodes)
-- [x] Swarm mode
-
-### Configuration
-- [x] 15+ Model Providers
-- [x] Retry Strategy
-- [x] Conversation Manager
-- [x] Session Manager
-- [x] Invocation Limits
-- [x] Structured Output
-- [x] Guardrails (Bedrock + Agent Control + Custom Hooks)
-- [x] OpenTelemetry Tracing
-- [x] Agent SOPs
-- [x] Memory Manager (Bedrock KB, Mem0)
-- [x] Goal Loop Plugin
-- [x] Human-in-the-Loop
-- [x] Community Tools Catalog
-
-### Execution
-- [x] Single turn execution run
-- [x] Multi turns interactive chat mode
-- [x] Flow validation with navigate-to-node
-- [x] Python syntax checking for custom tools
-
-### Deployment
-- [x] One-click deploy to Bedrock AgentCore
-- [x] One-click deploy to Lambda
-- [x] One-click deploy to ECS Fargate
-- [x] Auth configuration (IAM/Cognito/API Key)
-- [x] Deploy progress stepper
