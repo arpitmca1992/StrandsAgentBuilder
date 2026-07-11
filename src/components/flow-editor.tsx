@@ -178,14 +178,23 @@ export function FlowEditor({
     (params: Connection) => {
       const validation = isValidConnection(params, nodes, edges, graphMode);
       if (validation.valid) {
+        // Count existing edges from same source+handle to determine sequence number
+        const existingFromSource = edges.filter(
+          e => e.source === params.source && e.sourceHandle === params.sourceHandle
+        ).length;
+        const sequenceLabel = existingFromSource > 0 ? `${existingFromSource + 1}` : '';
+
         setEdges(addEdge({
           ...params,
           animated: true,
+          label: sequenceLabel || undefined,
+          labelStyle: { fontSize: 10, fontWeight: 700, fill: '#6366f1' },
+          labelBgStyle: { fill: '#eef2ff', stroke: '#c7d2fe', strokeWidth: 1, rx: 4, ry: 4 },
+          labelBgPadding: [4, 2] as [number, number],
           style: { stroke: '#6366f1', strokeWidth: 2 },
         }, edges));
         setConnectionError(null);
       } else {
-        // Show toast-style error instead of alert()
         setConnectionError(validation.message || 'Invalid connection');
         setTimeout(() => setConnectionError(null), 3000);
       }
