@@ -1237,6 +1237,89 @@ export function PropertyPanel({
               No configuration needed for IO nodes.
             </div>
           );
+        case 'adk-custom-agent':
+          return (
+            <div className="space-y-3">
+              <div>
+                <label className="text-[11px] font-medium text-slate-700 block mb-1">Agent Name *</label>
+                <input
+                  type="text"
+                  value={(selectedNode.data as any)?.name || ''}
+                  onChange={(e) => adkUpdate({ name: e.target.value })}
+                  placeholder="my_custom_agent"
+                  className="w-full px-2 py-1.5 text-xs border border-slate-200 rounded-md font-mono"
+                />
+              </div>
+              <div>
+                <label className="text-[11px] font-medium text-slate-700 block mb-1">Class Name</label>
+                <input
+                  type="text"
+                  value={(selectedNode.data as any)?.className || ''}
+                  onChange={(e) => adkUpdate({ className: e.target.value })}
+                  placeholder="MyCustomAgent"
+                  className="w-full px-2 py-1.5 text-xs border border-slate-200 rounded-md font-mono"
+                />
+              </div>
+              <div>
+                <label className="text-[11px] font-medium text-slate-700 block mb-1">Description</label>
+                <textarea
+                  value={(selectedNode.data as any)?.description || ''}
+                  onChange={(e) => adkUpdate({ description: e.target.value })}
+                  placeholder="What this custom agent does..."
+                  rows={2}
+                  className="w-full px-2 py-1.5 text-xs border border-slate-200 rounded-md resize-y"
+                />
+              </div>
+              <div>
+                <label className="text-[11px] font-medium text-slate-700 block mb-1">_run_async_impl Body</label>
+                <textarea
+                  value={(selectedNode.data as any)?.code || ''}
+                  onChange={(e) => adkUpdate({ code: e.target.value })}
+                  rows={8}
+                  className="w-full px-2 py-1.5 text-xs border border-slate-200 rounded-md font-mono resize-y"
+                  placeholder={'    async def _run_async_impl(self, ctx):\n        # Your orchestration logic\n        pass'}
+                />
+              </div>
+            </div>
+          );
+        case 'adk-a2a-tool':
+          return (
+            <div className="space-y-3">
+              <div>
+                <label className="text-[11px] font-medium text-slate-700 block mb-1">Agent Name</label>
+                <input
+                  type="text"
+                  value={(selectedNode.data as any)?.name || ''}
+                  onChange={(e) => adkUpdate({ name: e.target.value })}
+                  placeholder="remote_agent"
+                  className="w-full px-2 py-1.5 text-xs border border-slate-200 rounded-md"
+                />
+              </div>
+              <div>
+                <label className="text-[11px] font-medium text-slate-700 block mb-1">A2A Endpoint URL *</label>
+                <input
+                  type="text"
+                  value={(selectedNode.data as any)?.agentUrl || ''}
+                  onChange={(e) => adkUpdate({ agentUrl: e.target.value })}
+                  placeholder="http://remote-agent:8000/a2a"
+                  className="w-full px-2 py-1.5 text-xs border border-slate-200 rounded-md font-mono"
+                />
+              </div>
+              <div>
+                <label className="text-[11px] font-medium text-slate-700 block mb-1">Description</label>
+                <input
+                  type="text"
+                  value={(selectedNode.data as any)?.description || ''}
+                  onChange={(e) => adkUpdate({ description: e.target.value })}
+                  placeholder="What this remote agent does"
+                  className="w-full px-2 py-1.5 text-xs border border-slate-200 rounded-md"
+                />
+              </div>
+              <div className="p-2 bg-pink-50 border border-pink-100 rounded text-[10px] text-pink-700">
+                🌐 Connects to a remote agent via the A2A (Agent-to-Agent) protocol. The remote agent must expose a compatible A2A endpoint (via <code>runner.to_a2a()</code>).
+              </div>
+            </div>
+          );
         default:
           return (
             <div className="text-gray-500 text-center py-8">

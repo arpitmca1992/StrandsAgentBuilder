@@ -46,8 +46,8 @@ class TemplateListItem(BaseModel):
     source_author: Optional[str]
 
 @router.get("/", response_model=List[TemplateListItem])
-async def list_templates(category: Optional[str] = None, difficulty: Optional[str] = None):
-    """List all published templates, optionally filtered by category or difficulty."""
+async def list_templates(category: Optional[str] = None, difficulty: Optional[str] = None, framework: Optional[str] = None):
+    """List all published templates, optionally filtered by category, difficulty, or framework."""
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
     
@@ -58,6 +58,11 @@ async def list_templates(category: Optional[str] = None, difficulty: Optional[st
         query += " AND category = %s"
         params.append(category)
     if difficulty:
+        query += " AND difficulty = %s"
+        params.append(difficulty)
+    if framework:
+        query += " AND (framework = %s OR framework IS NULL)"
+        params.append(framework)
         query += " AND difficulty = %s"
         params.append(difficulty)
     

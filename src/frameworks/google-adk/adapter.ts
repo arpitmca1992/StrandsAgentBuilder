@@ -13,9 +13,11 @@ import { ADKLlmAgentNode } from './nodes/llm-agent-node';
 import { ADKSequentialAgentNode } from './nodes/sequential-agent-node';
 import { ADKParallelAgentNode } from './nodes/parallel-agent-node';
 import { ADKLoopAgentNode } from './nodes/loop-agent-node';
+import { ADKCustomAgentNode } from './nodes/custom-agent-node';
 import { ADKFunctionToolNode } from './nodes/function-tool-node';
 import { ADKMCPToolNode } from './nodes/mcp-tool-node';
 import { ADKBuiltinToolNode } from './nodes/builtin-tool-node';
+import { ADKA2AToolNode } from './nodes/a2a-tool-node';
 import { ADKInputNode } from './nodes/input-node';
 import { ADKOutputNode } from './nodes/output-node';
 
@@ -36,9 +38,11 @@ export const GoogleADKAdapter: FrameworkAdapter = {
       'adk-sequential': ADKSequentialAgentNode,
       'adk-parallel': ADKParallelAgentNode,
       'adk-loop': ADKLoopAgentNode,
+      'adk-custom-agent': ADKCustomAgentNode,
       'adk-function-tool': ADKFunctionToolNode,
       'adk-mcp-tool': ADKMCPToolNode,
       'adk-builtin-tool': ADKBuiltinToolNode,
+      'adk-a2a-tool': ADKA2AToolNode,
       'adk-input': ADKInputNode,
       'adk-output': ADKOutputNode,
     };
@@ -62,6 +66,7 @@ export const GoogleADKAdapter: FrameworkAdapter = {
           { type: 'adk-sequential', label: 'Sequential Agent', description: 'Runs sub-agents in order', color: 'purple', docUrl: 'https://google.github.io/adk-docs/agents/workflow-agents/sequential-agent/' },
           { type: 'adk-parallel', label: 'Parallel Agent', description: 'Runs sub-agents concurrently', color: 'orange', docUrl: 'https://google.github.io/adk-docs/agents/workflow-agents/parallel-agent/' },
           { type: 'adk-loop', label: 'Loop Agent', description: 'Repeats sub-agents until condition', color: 'teal', docUrl: 'https://google.github.io/adk-docs/agents/workflow-agents/loop-agent/' },
+          { type: 'adk-custom-agent', label: 'Custom Agent', description: 'User-defined BaseAgent', color: 'slate', docUrl: 'https://google.github.io/adk-docs/agents/custom-agents/' },
         ],
       },
       {
@@ -71,6 +76,7 @@ export const GoogleADKAdapter: FrameworkAdapter = {
           { type: 'adk-function-tool', label: 'Function Tool', description: 'Python function as tool', color: 'green', docUrl: 'https://google.github.io/adk-docs/tools/' },
           { type: 'adk-mcp-tool', label: 'MCP Toolset', description: 'MCP server integration', color: 'cyan', docUrl: 'https://google.github.io/adk-docs/tools-custom/mcp-tools/' },
           { type: 'adk-builtin-tool', label: 'Built-in Tool', description: 'google_search, code_execution', color: 'yellow', docUrl: 'https://google.github.io/adk-docs/tools/' },
+          { type: 'adk-a2a-tool', label: 'A2A Agent', description: 'Remote Agent-to-Agent protocol', color: 'pink', docUrl: 'https://google.github.io/adk-docs/a2a/' },
         ],
       },
     ];

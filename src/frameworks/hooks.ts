@@ -206,6 +206,19 @@ function getADKNodeDefaults(type: string): Record<string, any> {
       label: 'Google Search',
       toolType: 'google_search',
     },
+    'adk-a2a-tool': {
+      label: 'A2A Agent',
+      agentUrl: '',
+      name: 'remote_agent',
+      description: 'Remote agent via A2A protocol',
+    },
+    'adk-custom-agent': {
+      label: 'Custom Agent',
+      name: '',
+      description: 'Custom BaseAgent implementation',
+      className: 'MyCustomAgent',
+      code: '    async def _run_async_impl(self, ctx):\n        # Custom orchestration logic\n        pass',
+    },
     'adk-input': { label: 'Input' },
     'adk-output': { label: 'Output' },
   };
@@ -218,9 +231,11 @@ function getADKMiniMapColor(node: Node): string {
     case 'adk-sequential': return '#8b5cf6';
     case 'adk-parallel': return '#f97316';
     case 'adk-loop': return '#14b8a6';
+    case 'adk-custom-agent': return '#64748b';
     case 'adk-function-tool': return '#22c55e';
     case 'adk-mcp-tool': return '#06b6d4';
     case 'adk-builtin-tool': return '#eab308';
+    case 'adk-a2a-tool': return '#ec4899';
     case 'adk-input': return '#22c55e';
     case 'adk-output': return '#ef4444';
     default: return '#9ca3af';

@@ -36,10 +36,12 @@ export interface TemplateDetail {
 export async function fetchTemplates(filters?: {
   category?: string;
   difficulty?: string;
+  framework?: string;
 }): Promise<TemplateListItem[]> {
   const params = new URLSearchParams();
   if (filters?.category) params.set('category', filters.category);
   if (filters?.difficulty) params.set('difficulty', filters.difficulty);
+  if (filters?.framework) params.set('framework', filters.framework);
 
   const url = params.toString() ? `${API_BASE}?${params}` : API_BASE;
 

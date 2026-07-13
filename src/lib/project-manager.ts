@@ -1,9 +1,11 @@
 import { type Node, type Edge } from '@xyflow/react';
+import type { FrameworkId } from '../frameworks/types';
 
 export interface StrandsProject {
   id: string;
   name: string;
   description?: string;
+  framework?: FrameworkId;
   nodes: Node[];
   edges: Edge[];
   graphMode?: boolean;
