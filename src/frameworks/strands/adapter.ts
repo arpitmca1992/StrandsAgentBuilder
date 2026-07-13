@@ -30,6 +30,9 @@ import { generateStrandsAgentCode } from '../../lib/code-generator';
 // Validation
 import { validateFlow } from '../../lib/flow-validator';
 
+// Deploy
+import { DeployPanel } from '../../components/deploy-panel';
+
 export const StrandsAdapter: FrameworkAdapter = {
   id: 'strands',
   name: 'Strands Agents',
@@ -141,9 +144,6 @@ export const StrandsAdapter: FrameworkAdapter = {
   },
 
   getDeployPanel() {
-    // Returns existing deploy panel component
-    // Will be properly wired in Phase 2
-    const { DeployPanel } = require('../../components/deploy-panel');
     return DeployPanel;
   },
 

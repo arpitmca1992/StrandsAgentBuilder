@@ -63,8 +63,6 @@ async def list_templates(category: Optional[str] = None, difficulty: Optional[st
     if framework:
         query += " AND (framework = %s OR framework IS NULL)"
         params.append(framework)
-        query += " AND difficulty = %s"
-        params.append(difficulty)
     
     query += " ORDER BY is_official DESC, use_count DESC"
     
