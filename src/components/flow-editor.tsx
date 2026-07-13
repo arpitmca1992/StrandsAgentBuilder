@@ -1,4 +1,4 @@
-import React, { useCallback, useRef, useState } from 'react';
+import React, { useCallback, useRef, useState, useMemo } from 'react';
 import {
   ReactFlow,
   useNodesState,
@@ -25,6 +25,11 @@ import {
   Keyboard, ZoomIn, ZoomOut, Maximize2, Trash2, X
 } from 'lucide-react';
 
+// Framework-aware imports
+import { useFrameworkNodeTypes, useNodeDefaults, useMiniMapColors, useEdgeLabeler } from '../frameworks/hooks';
+import { useFramework } from '../context/framework-context';
+
+// Strands node imports (used as fallback when no framework context)
 import {
   AgentNode,
   OrchestratorAgentNode,
@@ -44,7 +49,8 @@ import { isValidConnection } from '../lib/connection-validator';
 const initialNodes: Node[] = [];
 const initialEdges: Edge[] = [];
 
-const nodeTypes = {
+// Fallback node types (used when framework context isn't available)
+const fallbackNodeTypes = {
   agent: AgentNode,
   'orchestrator-agent': OrchestratorAgentNode,
   swarm: SwarmNode,
@@ -59,32 +65,26 @@ const nodeTypes = {
   'condition-node': ConditionNode,
 };
 
-/** MiniMap node color by type */
-function getMiniMapNodeColor(node: Node): string {
-  switch (node.type) {
-    case 'agent': return '#3b82f6';
-    case 'orchestrator-agent': return '#8b5cf6';
-    case 'swarm': return '#10b981';
-    case 'a2a-agent': return '#0ea5e9';
-    case 'workflow': return '#f59e0b';
-    case 'tool': return '#6b7280';
-    case 'mcp-tool': return '#6366f1';
-    case 'input': return '#22c55e';
-    case 'output': return '#ef4444';
-    case 'custom-tool': return '#ec4899';
-    case 'graph-builder': return '#7c3aed';
-    default: return '#9ca3af';
-  }
-}
+/** MiniMap node color — delegates to framework hook inside component */
 
-/** Quick-add node items for the floating toolbar */
-const quickAddItems = [
+/** Quick-add node items for the floating toolbar — Strands */
+const strandsQuickAddItems = [
   { type: 'agent', icon: Bot, label: 'Agent', color: 'text-blue-600' },
   { type: 'input', icon: ArrowRight, label: 'Input', color: 'text-green-600' },
   { type: 'output', icon: ArrowLeft, label: 'Output', color: 'text-red-600' },
   { type: 'tool', icon: Wrench, label: 'Tool', color: 'text-gray-600' },
   { type: 'mcp-tool', icon: Server, label: 'MCP', color: 'text-indigo-600' },
   { type: 'custom-tool', icon: Code, label: 'Custom', color: 'text-pink-600' },
+];
+
+/** Quick-add node items for the floating toolbar — ADK */
+const adkQuickAddItems = [
+  { type: 'adk-llm-agent', icon: Bot, label: 'Agent', color: 'text-blue-600' },
+  { type: 'adk-input', icon: ArrowRight, label: 'Input', color: 'text-green-600' },
+  { type: 'adk-output', icon: ArrowLeft, label: 'Output', color: 'text-red-600' },
+  { type: 'adk-function-tool', icon: Code, label: 'Tool', color: 'text-green-600' },
+  { type: 'adk-mcp-tool', icon: Server, label: 'MCP', color: 'text-cyan-600' },
+  { type: 'adk-sequential', icon: Crown, label: 'Seq', color: 'text-purple-600' },
 ];
 
 interface FlowEditorProps {
@@ -109,6 +109,25 @@ export function FlowEditor({
   onGraphModeChange
 }: FlowEditorProps) {
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
+
+  // Framework-aware hooks — provides dynamic node types, defaults, and colors
+  const frameworkNodeTypes = useFrameworkNodeTypes();
+  const getDefaultNodeData = useNodeDefaults();
+  const getMiniMapNodeColor = useMiniMapColors();
+  const getEdgeLabel = useEdgeLabeler();
+  const { framework } = useFramework();
+
+  // Select quick-add items based on active framework
+  const quickAddItems = framework?.id === 'google-adk' ? adkQuickAddItems : strandsQuickAddItems;
+
+  // Merge framework node types with fallback (framework types take priority)
+  const nodeTypes = useMemo(() => {
+    if (Object.keys(frameworkNodeTypes).length > 0) {
+      return { ...fallbackNodeTypes, ...frameworkNodeTypes };
+    }
+    return fallbackNodeTypes;
+  }, [frameworkNodeTypes]);
+
   const [internalNodes, setInternalNodes, onInternalNodesChange]: [Node[], (nodes: Node[]) => void, OnNodesChange] = useNodesState(initialNodes);
   const [showShortcuts, setShowShortcuts] = useState(false);
   const [connectionError, setConnectionError] = useState<string | null>(null);
@@ -178,18 +197,19 @@ export function FlowEditor({
     (params: Connection) => {
       const validation = isValidConnection(params, nodes, edges, graphMode);
       if (validation.valid) {
-        // Determine edge label based on connection type (Strands semantics)
+        // Use framework adapter for edge labels
         let edgeLabel: string | undefined;
         const sourceNode = nodes.find(n => n.id === params.source);
         const targetNode = nodes.find(n => n.id === params.target);
 
-        if (params.sourceHandle === 'sub-agents') {
-          edgeLabel = 'tool'; // Orchestrator → sub-agent = "used as tool"
-        } else if (sourceNode?.type === 'condition-node') {
-          edgeLabel = params.sourceHandle === 'true' ? '✓ true' : '✗ false';
-        } else if (graphMode && params.sourceHandle === 'output' &&
+        if (sourceNode && targetNode) {
+          edgeLabel = getEdgeLabel(sourceNode, targetNode, params.sourceHandle) || undefined;
+        }
+
+        // Fallback for graph mode dependency edges
+        if (!edgeLabel && graphMode && params.sourceHandle === 'output' &&
           (params.targetHandle === 'user-input' || params.targetHandle === 'input')) {
-          edgeLabel = 'depends'; // Graph dependency
+          edgeLabel = 'depends';
         }
 
         setEdges(addEdge({
@@ -245,41 +265,6 @@ export function FlowEditor({
     setIsDragOver(false);
     setDragNodeType(null);
   }, []);
-
-  /** Create default data for a node type */
-  const getDefaultNodeData = (type: string) => {
-    const defaults: Record<string, any> = {
-      agent: {
-        label: 'Agent',
-        modelProvider: 'AWS Bedrock',
-        modelId: 'us.anthropic.claude-3-7-sonnet-20250219-v1:0',
-        modelName: 'Claude 3.7 Sonnet',
-        systemPrompt: 'You are a helpful AI assistant.',
-        temperature: 0.7,
-        maxTokens: 4000,
-      },
-      'orchestrator-agent': {
-        label: 'Orchestrator',
-        modelProvider: 'AWS Bedrock',
-        modelId: 'us.anthropic.claude-3-7-sonnet-20250219-v1:0',
-        modelName: 'Claude 3.7 Sonnet',
-        systemPrompt: 'You orchestrate multiple agents to solve complex tasks.',
-        temperature: 0.7,
-        maxTokens: 4000,
-      },
-      swarm: { label: 'Swarm', maxHandoffs: 20, maxIterations: 20, executionTimeout: 900, nodeTimeout: 300 },
-      'a2a-agent': { label: 'A2A Agent', endpoint: '', timeout: 300 },
-      workflow: { label: 'Workflow', workflowId: 'my_workflow', tasks: [] },
-      'function-node': { label: 'Function', functionCode: 'def process(data: str) -> str:\n    """Process input data."""\n    return f"Processed: {data}"', description: 'Custom processing logic' },
-      'condition-node': { label: 'Condition', conditionType: 'output_contains', conditionValue: '', customCode: '' },
-      tool: { label: 'Tool', toolType: 'built-in', toolName: 'calculator' },
-      'mcp-tool': { label: 'MCP Server', serverName: 'mcp_server', transportType: 'stdio', command: 'uvx', args: ['server-name@latest'], argsText: 'server-name@latest', url: 'http://localhost:8000/mcp', timeout: 30, description: 'MCP server for external tools', env: {}, envText: '' },
-      input: { label: 'User Input' },
-      output: { label: 'Output' },
-      'custom-tool': { label: 'Custom Tool', pythonCode: '@tool\ndef my_tool(param: str) -> dict:\n    """Tool description."""\n    return {"status": "success"}' },
-    };
-    return defaults[type] || { label: `${type} node` };
-  };
 
   const onDrop = useCallback(
     (event: React.DragEvent) => {

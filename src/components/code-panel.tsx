@@ -2,8 +2,8 @@ import { useEffect, useState } from 'react';
 import Editor from '@monaco-editor/react';
 import { type Node, type Edge } from '@xyflow/react';
 import { Code, Download, Play, AlertCircle, Edit3, Save, X, CheckCircle2, AlertTriangle, Info } from 'lucide-react';
-import { generateStrandsAgentCode } from '../lib/code-generator';
-import { validateFlow, getValidationSummary, type ValidationIssue } from '../lib/flow-validator';
+import { getValidationSummary, type ValidationIssue } from '../lib/flow-validator';
+import { useCodeGenerator, useFlowValidator } from '../frameworks/hooks';
 
 interface CodePanelProps {
   nodes: Node[];
@@ -14,6 +14,8 @@ interface CodePanelProps {
 }
 
 export function CodePanel({ nodes, edges, graphMode = false, className = '', onNavigateToNode }: CodePanelProps) {
+  const generateCode = useCodeGenerator();
+  const frameworkValidator = useFlowValidator();
   const [generatedCode, setGeneratedCode] = useState('');
   const [editedCode, setEditedCode] = useState('');
   const [errors, setErrors] = useState<string[]>([]);
@@ -24,11 +26,11 @@ export function CodePanel({ nodes, edges, graphMode = false, className = '', onN
   const [flowChangedWhileEditing, setFlowChangedWhileEditing] = useState(false);
 
   useEffect(() => {
-    const result = generateStrandsAgentCode(nodes, edges, graphMode);
-    const fullCode = result.imports.join('\n') + '\n\n' + result.code;
+    // Use framework-aware code generator
+    const fullCode = generateCode(nodes, edges, { graphMode });
 
-    // Run flow validation
-    const issues = validateFlow(nodes, edges);
+    // Use framework-aware validator
+    const issues = frameworkValidator(nodes, edges);
     setValidationIssues(issues);
 
     if (isInEditMode) {

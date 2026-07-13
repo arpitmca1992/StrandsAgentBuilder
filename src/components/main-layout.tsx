@@ -1,6 +1,7 @@
 import { useState, useCallback, useEffect } from 'react';
 import { type Node, type Edge } from '@xyflow/react';
-import { Code, Eye, EyeOff, FolderOpen, Terminal, Save, Plus, Download, Upload, Rocket, Play, GithubIcon } from 'lucide-react';
+import { Code, Eye, EyeOff, FolderOpen, Terminal, Save, Plus, Download, Upload, Rocket, Play, GithubIcon, ArrowLeftRight } from 'lucide-react';
+import { useFramework } from '../context/framework-context';
 import { FlowEditor } from './flow-editor';
 import { NodePalette } from './node-palette';
 import { PropertyPanel } from './property-panel';
@@ -12,6 +13,7 @@ import { ProjectManagerComponent } from './project-manager';
 import { ResizablePanel } from './resizable-panel';
 import { type StrandsProject, ProjectManager } from '../lib/project-manager';
 import { generateStrandsAgentCode } from '../lib/code-generator';
+import { useCodeGenerator } from '../frameworks/hooks';
 import { validateFlow, type ValidationIssue } from '../lib/flow-validator';
 import { showToast, ToastRenderer } from './ui/simple-toast';
 import { useUndoRedo } from '../lib/use-undo-redo';
@@ -50,6 +52,8 @@ const clearAutoSavedFlow = () => {
 };
 
 export function MainLayout() {
+  const { framework, exitToSelector } = useFramework();
+  const generateCode = useCodeGenerator();
   const [selectedNode, setSelectedNode] = useState<Node | null>(null);
   const [nodes, setNodes] = useState<Node[]>([]);
   const [edges, setEdges] = useState<Edge[]>([]);
@@ -321,11 +325,10 @@ export function MainLayout() {
     event.target.value = '';
   }, []);
 
-  // Generate current code for execution
+  // Generate current code for execution — uses active framework's code generator
   const getCurrentCode = useCallback(() => {
-    const result = generateStrandsAgentCode(nodes, edges, graphMode);
-    return result.imports.join('\n') + '\n\n' + result.code;
-  }, [nodes, edges, graphMode]);
+    return generateCode(nodes, edges, { graphMode });
+  }, [nodes, edges, graphMode, generateCode]);
 
   // Navigate to a specific node (select it + open property panel)
   const handleNavigateToNode = useCallback((nodeId: string) => {
@@ -375,6 +378,18 @@ export function MainLayout() {
         <header className="bg-white border-b border-gray-200 flex-shrink-0">
           {/* Top bar: Project + Actions */}
           <div className="flex items-center h-12 px-4 gap-4">
+            {/* Framework Badge + Switch */}
+            <button
+              onClick={exitToSelector}
+              className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-indigo-50 border border-indigo-200 hover:bg-indigo-100 transition-colors group"
+              title="Switch framework"
+            >
+              <ArrowLeftRight className="w-3 h-3 text-indigo-400 group-hover:text-indigo-600" />
+              <span className="text-[10px] font-semibold text-indigo-700 uppercase tracking-wide">
+                {framework?.id === 'google-adk' ? 'ADK' : 'Strands'}
+              </span>
+            </button>
+
             {/* Project Name */}
             <div className="flex items-center gap-2 min-w-0">
               <div className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-gray-50 border border-gray-200 min-w-0">

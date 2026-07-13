@@ -6,6 +6,8 @@ import { GuardrailsConfig } from './guardrails-config';
 import { ObservabilityConfig } from './observability-config';
 import { AdvancedFeaturesConfig } from './advanced-features-config';
 import { AgentPluginsConfig } from './agent-plugins-config';
+import { useFramework } from '../context/framework-context';
+import { ADKAgentConfig, ADKCallbacksConfig, ADKSessionConfig } from '../frameworks/google-adk/config';
 
 interface PropertyPanelProps {
   selectedNode: Node | null;
@@ -24,6 +26,8 @@ export function PropertyPanel({
   nodes = [],
   className = ''
 }: PropertyPanelProps) {
+  const { framework } = useFramework();
+
   if (!selectedNode) {
     return null;
   }
@@ -1059,6 +1063,190 @@ export function PropertyPanel({
   );
 
   const renderProperties = () => {
+    // ─── Google ADK Node Types ─────────────────────────────────
+    if (framework?.id === 'google-adk') {
+      const adkUpdate = (updates: Record<string, any>) => {
+        onUpdateNode(selectedNode.id, { ...selectedNode.data, ...updates });
+      };
+
+      switch (selectedNode.type) {
+        case 'adk-llm-agent':
+          return (
+            <div className="space-y-4">
+              <ADKAgentConfig data={selectedNode.data as Record<string, any>} onUpdate={adkUpdate} />
+              <ADKCallbacksConfig data={selectedNode.data as Record<string, any>} onUpdate={adkUpdate} />
+              <ADKSessionConfig data={selectedNode.data as Record<string, any>} onUpdate={adkUpdate} />
+            </div>
+          );
+        case 'adk-sequential':
+        case 'adk-parallel':
+        case 'adk-loop':
+          return (
+            <div className="space-y-3">
+              <div>
+                <label className="text-[11px] font-medium text-slate-700 block mb-1">Agent Name *</label>
+                <input
+                  type="text"
+                  value={(selectedNode.data as any)?.name || ''}
+                  onChange={(e) => adkUpdate({ name: e.target.value })}
+                  placeholder="workflow_agent"
+                  className="w-full px-2 py-1.5 text-xs border border-slate-200 rounded-md"
+                />
+              </div>
+              <div>
+                <label className="text-[11px] font-medium text-slate-700 block mb-1">Description</label>
+                <textarea
+                  value={(selectedNode.data as any)?.description || ''}
+                  onChange={(e) => adkUpdate({ description: e.target.value })}
+                  placeholder="What this workflow agent does..."
+                  rows={3}
+                  className="w-full px-2 py-1.5 text-xs border border-slate-200 rounded-md resize-y"
+                />
+              </div>
+              {selectedNode.type === 'adk-loop' && (
+                <div>
+                  <label className="text-[11px] font-medium text-slate-700 block mb-1">Max Iterations</label>
+                  <input
+                    type="number"
+                    min="1"
+                    max="100"
+                    value={(selectedNode.data as any)?.maxIterations || 10}
+                    onChange={(e) => adkUpdate({ maxIterations: parseInt(e.target.value) })}
+                    className="w-full px-2 py-1.5 text-xs border border-slate-200 rounded-md"
+                  />
+                </div>
+              )}
+              <div className="p-2 bg-purple-50 border border-purple-100 rounded text-[10px] text-purple-700">
+                Connect sub-agents to the left handle. They will be executed {
+                  selectedNode.type === 'adk-sequential' ? 'in order' :
+                  selectedNode.type === 'adk-parallel' ? 'concurrently' :
+                  'in a loop until escalation'
+                }.
+              </div>
+            </div>
+          );
+        case 'adk-function-tool':
+          return (
+            <div className="space-y-3">
+              <div>
+                <label className="text-[11px] font-medium text-slate-700 block mb-1">Function Name *</label>
+                <input
+                  type="text"
+                  value={(selectedNode.data as any)?.functionName || ''}
+                  onChange={(e) => adkUpdate({ functionName: e.target.value })}
+                  placeholder="my_tool"
+                  className="w-full px-2 py-1.5 text-xs border border-slate-200 rounded-md font-mono"
+                />
+              </div>
+              <div>
+                <label className="text-[11px] font-medium text-slate-700 block mb-1">Description (docstring)</label>
+                <input
+                  type="text"
+                  value={(selectedNode.data as any)?.description || ''}
+                  onChange={(e) => adkUpdate({ description: e.target.value })}
+                  placeholder="What this tool does — LLM reads this"
+                  className="w-full px-2 py-1.5 text-xs border border-slate-200 rounded-md"
+                />
+              </div>
+              <div>
+                <label className="text-[11px] font-medium text-slate-700 block mb-1">Function Body</label>
+                <textarea
+                  value={(selectedNode.data as any)?.code || '    return {"status": "success"}'}
+                  onChange={(e) => adkUpdate({ code: e.target.value })}
+                  rows={6}
+                  className="w-full px-2 py-1.5 text-xs border border-slate-200 rounded-md font-mono resize-y"
+                  placeholder={'    # Your implementation\n    return {"result": query}'}
+                />
+                <p className="text-[10px] text-slate-400 mt-0.5">Indented body of the function (params are auto-generated)</p>
+              </div>
+            </div>
+          );
+        case 'adk-mcp-tool':
+          return (
+            <div className="space-y-3">
+              <div>
+                <label className="text-[11px] font-medium text-slate-700 block mb-1">Server Name</label>
+                <input
+                  type="text"
+                  value={(selectedNode.data as any)?.serverName || ''}
+                  onChange={(e) => adkUpdate({ serverName: e.target.value })}
+                  placeholder="my_mcp_server"
+                  className="w-full px-2 py-1.5 text-xs border border-slate-200 rounded-md"
+                />
+              </div>
+              <div>
+                <label className="text-[11px] font-medium text-slate-700 block mb-1">Transport</label>
+                <select
+                  value={(selectedNode.data as any)?.transport || 'stdio'}
+                  onChange={(e) => adkUpdate({ transport: e.target.value })}
+                  className="w-full px-2 py-1.5 text-xs border border-slate-200 rounded-md"
+                >
+                  <option value="stdio">stdio (local process)</option>
+                  <option value="sse">SSE (HTTP server)</option>
+                </select>
+              </div>
+              {(selectedNode.data as any)?.transport === 'sse' ? (
+                <div>
+                  <label className="text-[11px] font-medium text-slate-700 block mb-1">Server URL</label>
+                  <input
+                    type="text"
+                    value={(selectedNode.data as any)?.url || ''}
+                    onChange={(e) => adkUpdate({ url: e.target.value })}
+                    placeholder="http://localhost:3000/sse"
+                    className="w-full px-2 py-1.5 text-xs border border-slate-200 rounded-md font-mono"
+                  />
+                </div>
+              ) : (
+                <div>
+                  <label className="text-[11px] font-medium text-slate-700 block mb-1">Command</label>
+                  <input
+                    type="text"
+                    value={(selectedNode.data as any)?.command || 'npx'}
+                    onChange={(e) => adkUpdate({ command: e.target.value })}
+                    placeholder="npx -y my-mcp-server"
+                    className="w-full px-2 py-1.5 text-xs border border-slate-200 rounded-md font-mono"
+                  />
+                </div>
+              )}
+            </div>
+          );
+        case 'adk-builtin-tool':
+          return (
+            <div className="space-y-3">
+              <div>
+                <label className="text-[11px] font-medium text-slate-700 block mb-1">Built-in Tool</label>
+                <select
+                  value={(selectedNode.data as any)?.toolType || 'google_search'}
+                  onChange={(e) => adkUpdate({ toolType: e.target.value, label: e.target.selectedOptions[0]?.text || e.target.value })}
+                  className="w-full px-2 py-1.5 text-xs border border-slate-200 rounded-md"
+                >
+                  <option value="google_search">Google Search</option>
+                  <option value="code_execution">Code Execution</option>
+                  <option value="vertex_ai_search">Vertex AI Search</option>
+                </select>
+              </div>
+              <div className="p-2 bg-yellow-50 border border-yellow-100 rounded text-[10px] text-yellow-700">
+                Built-in tools require no setup. Connect to an LLM Agent's tools handle.
+              </div>
+            </div>
+          );
+        case 'adk-input':
+        case 'adk-output':
+          return (
+            <div className="text-center py-8 text-slate-400 text-xs">
+              No configuration needed for IO nodes.
+            </div>
+          );
+        default:
+          return (
+            <div className="text-gray-500 text-center py-8">
+              No properties available for this node type.
+            </div>
+          );
+      }
+    }
+
+    // ─── Strands Node Types (existing) ─────────────────────────
     switch (selectedNode.type) {
       case 'agent':
         return renderAgentProperties(selectedNode.data);

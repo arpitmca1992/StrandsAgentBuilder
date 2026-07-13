@@ -1,17 +1,18 @@
-# Strands Agent Builder
+# Agent Builder Studio
 
-**Visual AI Agent Builder** | No-Code Agent Workflows | Drag-and-Drop | Python Code Generation | Multi-Agent Orchestration
+**Visual AI Agent Builder** | Multi-Framework | No-Code Agent Workflows | Drag-and-Drop | Python Code Generation | Multi-Agent Orchestration
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Strands SDK](https://img.shields.io/badge/Strands_SDK-Compatible-blue.svg)](https://strandsagents.com/)
+[![Strands SDK](https://img.shields.io/badge/Strands_SDK-v1.47.0-blue.svg)](https://strandsagents.com/)
+[![Google ADK](https://img.shields.io/badge/Google_ADK-v1.28.0-emerald.svg)](https://google.github.io/adk-docs/)
 
-> Build AI agent teams visually — drag, connect, configure, deploy. No coding required to get started. Full Python code generated automatically.
+> Build AI agent teams visually — drag, connect, configure, deploy. Supports **Strands Agents SDK** and **Google ADK**. No coding required to get started. Full Python code generated automatically.
 
-A visual drag-and-drop interface for creating, configuring, and executing AI agent workflows. Build complex agent interactions through an intuitive node-based editor that generates Python code using the [Strands Agents SDK](https://strandsagents.com/).
+A visual drag-and-drop interface for creating, configuring, and executing AI agent workflows. Build complex agent interactions through an intuitive node-based editor that generates Python code using the [Strands Agents SDK](https://strandsagents.com/) or [Google Agent Development Kit (ADK)](https://google.github.io/adk-docs/).
 
 ### 🔍 Keywords
 
-`ai-agents` `agent-builder` `visual-programming` `no-code` `low-code` `strands-agents` `multi-agent` `agent-orchestration` `llm` `bedrock` `openai` `anthropic` `drag-and-drop` `flow-editor` `react-flow` `xyflow` `python-code-generation` `aws-bedrock` `agent-workflow` `ai-workflow-builder` `mcp-server` `model-context-protocol` `swarm-agents` `graph-agents` `a2a-protocol` `agent-to-agent` `guardrails` `opentelemetry` `agent-deployment` `lambda-deployment` `ecs-fargate` `agentcore` `structured-output` `conversation-management` `session-management` `agent-sops` `human-in-the-loop`
+`ai-agents` `agent-builder` `visual-programming` `no-code` `low-code` `strands-agents` `google-adk` `multi-agent` `agent-orchestration` `llm` `bedrock` `openai` `anthropic` `gemini` `drag-and-drop` `flow-editor` `react-flow` `xyflow` `python-code-generation` `aws-bedrock` `vertex-ai` `agent-workflow` `ai-workflow-builder` `mcp-server` `model-context-protocol` `swarm-agents` `graph-agents` `a2a-protocol` `agent-to-agent` `guardrails` `opentelemetry` `agent-deployment` `lambda-deployment` `ecs-fargate` `agentcore` `structured-output` `conversation-management` `session-management` `agent-sops` `human-in-the-loop`
 
 ---
 
@@ -169,6 +170,10 @@ mysql -u root strands_builder < backend/db/migrations/005_seed_rich_templates.sq
 - **AI Framework**: Strands Agents SDK (Python)
 - **Deployment**: AWS (AgentCore, Lambda, ECS Fargate)
 
+### SDK Compatibility
+
+This builder is updated to support features up to **Strands Agents SDK v1.47.0** (Python). Code generation covers the full SDK surface including multi-agent patterns (Graph, Swarm, A2A), memory management, interventions, and observability features introduced through v1.47.0.
+
 ---
 
 ## Architecture
@@ -183,26 +188,6 @@ mysql -u root strands_builder < backend/db/migrations/005_seed_rich_templates.sq
 ```
 
 ---
-
-## Roadmap (✅ = Complete)
-
-### Nodes
-- [x] Input, Output, Agent, Orchestrator, MCP Server, Built-in Tool, Custom Tool
-- [x] Swarm, A2A Agent, Workflow, Function Node, Condition Node
-- [x] Structured Output (via Agent Config)
-
-### Multi-Agent Flows
-- [x] Single agent, Agents-as-Tools, Graph mode (cycles + conditions), Swarm mode
-
-### Configuration (Full Strands SDK)
-- [x] 15+ Model Providers, Retry, Conversation/Session Manager, Limits
-- [x] Guardrails (Bedrock + Agent Control + Custom Hooks)
-- [x] OpenTelemetry, Agent SOPs, Memory (Bedrock KB, Mem0)
-- [x] Goal Loop, Human-in-the-Loop, Community Tools
-
-### Deployment
-- [x] One-click: AgentCore, Lambda, ECS Fargate
-- [x] Auth config (IAM/Cognito/API Key), Deploy stepper
 
 ---
 

@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
-import { Bot, Wrench, ArrowRight, ArrowLeft, Code, Server, Crown, Users, Globe, GitBranch, Search, X, Cpu, GitFork } from 'lucide-react';
+import React, { useState, useMemo } from 'react';
+import { Bot, Wrench, ArrowRight, ArrowLeft, Code, Server, Crown, Users, Globe, GitBranch, Search, X, Cpu, GitFork, ListOrdered, Layers, RefreshCw, Sparkles } from 'lucide-react';
+import { useFramework } from '../context/framework-context';
 
 interface NodeTypeItem {
   type: string;
@@ -135,14 +136,121 @@ const nodeTypes: NodeTypeItem[] = [
   },
 ];
 
-const categories = ['IO', 'Core', 'Tools', 'Multi-Agent'];
+// ─── Google ADK Node Types ──────────────────────────────────────
+const adkNodeTypes: NodeTypeItem[] = [
+  {
+    type: 'adk-llm-agent',
+    label: 'LLM Agent',
+    icon: Bot,
+    description: 'Reasoning agent powered by an LLM (Gemini, etc.)',
+    tooltip: 'The primary agent type in ADK. Uses an LLM for reasoning, can have tools and sub-agents. Configurable with callbacks (before/after model, before/after tool) for guardrails and logging.',
+    docUrl: 'https://google.github.io/adk-docs/agents/llm-agents/',
+    category: 'Agents',
+    color: 'bg-blue-50 border-blue-200 hover:border-blue-400',
+  },
+  {
+    type: 'adk-sequential',
+    label: 'Sequential Agent',
+    icon: ListOrdered,
+    description: 'Runs sub-agents one after another',
+    tooltip: 'A workflow agent that executes sub-agents sequentially. Each agent runs after the previous one completes. Use for multi-step pipelines where order matters (e.g., research → write → review).',
+    docUrl: 'https://google.github.io/adk-docs/agents/workflow-agents/sequential-agent/',
+    category: 'Workflow',
+    color: 'bg-purple-50 border-purple-200 hover:border-purple-400',
+  },
+  {
+    type: 'adk-parallel',
+    label: 'Parallel Agent',
+    icon: Layers,
+    description: 'Runs sub-agents concurrently',
+    tooltip: 'A workflow agent that executes all sub-agents in parallel. Use when tasks are independent and can run simultaneously (e.g., fetch data from multiple sources at once).',
+    docUrl: 'https://google.github.io/adk-docs/agents/workflow-agents/parallel-agent/',
+    category: 'Workflow',
+    color: 'bg-orange-50 border-orange-200 hover:border-orange-400',
+  },
+  {
+    type: 'adk-loop',
+    label: 'Loop Agent',
+    icon: RefreshCw,
+    description: 'Repeats sub-agents until escalation',
+    tooltip: 'A workflow agent that loops through sub-agents repeatedly until one of them escalates (signals completion). Great for iterative refinement (e.g., writer → reviewer loop until approved).',
+    docUrl: 'https://google.github.io/adk-docs/agents/workflow-agents/loop-agent/',
+    category: 'Workflow',
+    color: 'bg-teal-50 border-teal-200 hover:border-teal-400',
+  },
+  {
+    type: 'adk-function-tool',
+    label: 'Function Tool',
+    icon: Code,
+    description: 'Python function exposed as a tool',
+    tooltip: 'A Python function wrapped as FunctionTool that agents can call. Define the function, ADK automatically generates the schema from the signature and docstring.',
+    docUrl: 'https://google.github.io/adk-docs/tools/',
+    category: 'Tools',
+    color: 'bg-green-50 border-green-200 hover:border-green-400',
+  },
+  {
+    type: 'adk-mcp-tool',
+    label: 'MCP Toolset',
+    icon: Server,
+    description: 'Connect to MCP server for external tools',
+    tooltip: 'Connect to a Model Context Protocol (MCP) server. Supports stdio and SSE transports. Gives the agent access to all tools exposed by the MCP server.',
+    docUrl: 'https://google.github.io/adk-docs/tools-custom/mcp-tools/',
+    category: 'Tools',
+    color: 'bg-cyan-50 border-cyan-200 hover:border-cyan-400',
+  },
+  {
+    type: 'adk-builtin-tool',
+    label: 'Built-in Tool',
+    icon: Sparkles,
+    description: 'google_search, code_execution',
+    tooltip: 'Pre-built tools provided by ADK: Google Search (web search), Code Execution (run code in sandbox), Vertex AI Search. No setup needed — just connect to an agent.',
+    docUrl: 'https://google.github.io/adk-docs/tools/',
+    category: 'Tools',
+    color: 'bg-yellow-50 border-yellow-200 hover:border-yellow-400',
+  },
+  {
+    type: 'adk-input',
+    label: 'Input',
+    icon: ArrowRight,
+    description: 'User message / session input',
+    tooltip: 'The entry point for your ADK flow. Represents user input that starts the agent execution via Runner.',
+    docUrl: 'https://google.github.io/adk-docs/get-started/quickstart/',
+    category: 'IO',
+    color: 'bg-green-50 border-green-200 hover:border-green-400',
+  },
+  {
+    type: 'adk-output',
+    label: 'Output',
+    icon: ArrowLeft,
+    description: 'Agent response / events',
+    tooltip: 'Captures the agent output events. Required for code generation to produce the response handling code.',
+    docUrl: 'https://google.github.io/adk-docs/get-started/quickstart/',
+    category: 'IO',
+    color: 'bg-red-50 border-red-200 hover:border-red-400',
+  },
+];
+
+const strandsCategories = ['IO', 'Core', 'Tools', 'Multi-Agent'];
+const adkCategories = ['IO', 'Agents', 'Workflow', 'Tools'];
 
 interface NodePaletteProps {
   className?: string;
 }
 
 export function NodePalette({ className = '' }: NodePaletteProps) {
+  const { framework } = useFramework();
   const [searchQuery, setSearchQuery] = useState('');
+
+  // Select node types and categories based on active framework
+  const activeNodeTypes = useMemo(() => {
+    if (framework?.id === 'google-adk') return adkNodeTypes;
+    return nodeTypes;
+  }, [framework]);
+
+  const activeCategories = useMemo(() => {
+    if (framework?.id === 'google-adk') return adkCategories;
+    return strandsCategories;
+  }, [framework]);
   const [draggingType, setDraggingType] = useState<string | null>(null);
   const [hoveredNode, setHoveredNode] = useState<NodeTypeItem | null>(null);
   const [tooltipPos, setTooltipPos] = useState<{ top: number; left: number }>({ top: 0, left: 0 });
@@ -171,18 +279,18 @@ export function NodePalette({ className = '' }: NodePaletteProps) {
 
   // Filter nodes by search — derived state, no useEffect
   const filteredNodeTypes = searchQuery
-    ? nodeTypes.filter(
+    ? activeNodeTypes.filter(
         (node) =>
           node.label.toLowerCase().includes(searchQuery.toLowerCase()) ||
           node.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
           node.category.toLowerCase().includes(searchQuery.toLowerCase()) ||
           node.type.toLowerCase().includes(searchQuery.toLowerCase())
       )
-    : nodeTypes;
+    : activeNodeTypes;
 
   const filteredCategories = searchQuery
-    ? categories.filter((cat) => filteredNodeTypes.some((n) => n.category === cat))
-    : categories;
+    ? activeCategories.filter((cat) => filteredNodeTypes.some((n) => n.category === cat))
+    : activeCategories;
 
   return (
     <div className={`bg-white border-r border-gray-200 flex flex-col ${className}`}>
