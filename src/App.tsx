@@ -25,11 +25,10 @@ function AppRouter() {
 }
 
 function App() {
-  // Check if user had a framework selected previously
-  const initialFramework = getStoredFramework();
-
+  // Always show selector on app load — user explicitly chooses each session
+  // (stored framework only used for "recently opened" display, not auto-routing)
   return (
-    <FrameworkProvider initialFramework={initialFramework}>
+    <FrameworkProvider initialFramework={null}>
       <AppRouter />
     </FrameworkProvider>
   );
