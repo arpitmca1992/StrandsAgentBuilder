@@ -71,6 +71,17 @@ export function MainLayout() {
   // Undo/Redo system
   const { saveSnapshot, canUndo, canRedo } = useUndoRedo(nodes, edges, setNodes, setEdges);
 
+  // Set framework on ProjectManager so it uses correct namespace
+  useEffect(() => {
+    if (framework?.id) {
+      ProjectManager.setFramework(framework.id);
+    }
+    // One-time: migrate legacy localStorage projects
+    ProjectManager.migrateFromLegacy();
+    // Background sync unsynced projects to DB
+    ProjectManager.syncPendingProjects();
+  }, [framework?.id]);
+
   // Load current project on mount, or load auto-saved flow if no project
   useEffect(() => {
     const current = ProjectManager.getCurrentProject();
@@ -79,8 +90,7 @@ export function MainLayout() {
       setNodes(current.nodes);
       setEdges(current.edges);
       setGraphMode(current.graphMode || false);
-      setLastSaveTime(new Date(current.updatedAt)); // Set timestamp to project's last updated time
-      // Clear auto-save since we have a project loaded
+      setLastSaveTime(new Date(current.updatedAt));
       clearAutoSavedFlow();
     } else {
       // No current project, try to load auto-saved flow

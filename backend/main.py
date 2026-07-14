@@ -175,8 +175,10 @@ class ProjectData(BaseModel):
     id: str
     name: str
     description: Optional[str] = None
+    framework: Optional[str] = "strands"
     nodes: List[NodeData]
     edges: List[EdgeData]
+    graphMode: Optional[bool] = False
     createdAt: str
     updatedAt: str
     version: str
@@ -291,16 +293,12 @@ async def create_project(project: ProjectData):
 
 @app.put("/api/projects/{project_id}")
 async def update_project(project_id: str, project: ProjectData):
-    """Update an existing project"""
-    logger.info(f"Updating project: {project_id}")
-    
-    if project_id not in projects_storage:
-        logger.warning(f"Project not found for update: {project_id}")
-        raise HTTPException(status_code=404, detail="Project not found")
+    """Update an existing project (or create if not exists — upsert for sync)"""
+    logger.info(f"Upserting project: {project_id}")
     
     project.updatedAt = datetime.now().isoformat()
     projects_storage[project_id] = project
-    logger.info(f"Updated project: {project.name} ({project_id}) with {len(project.nodes)} nodes and {len(project.edges)} edges")
+    logger.info(f"Upserted project: {project.name} ({project_id}) framework={project.framework} with {len(project.nodes)} nodes")
     return project
 
 @app.delete("/api/projects/{project_id}")
