@@ -4,7 +4,7 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Strands SDK](https://img.shields.io/badge/Strands_SDK-v1.47.0-blue.svg)](https://strandsagents.com/)
-[![Google ADK](https://img.shields.io/badge/Google_ADK-v1.28.0-emerald.svg)](https://google.github.io/adk-docs/)
+[![Google ADK](https://img.shields.io/badge/Google_ADK-v1.36.x-emerald.svg)](https://google.github.io/adk-docs/)
 
 > Build AI agent teams visually — drag, connect, configure, deploy. Supports **Strands Agents SDK** and **Google ADK**. No coding required to get started. Full Python code generated automatically.
 
@@ -173,6 +173,8 @@ mysql -u root strands_builder < backend/db/migrations/005_seed_rich_templates.sq
 ### SDK Compatibility
 
 This builder is updated to support features up to **Strands Agents SDK v1.47.0** (Python). Code generation covers the full SDK surface including multi-agent patterns (Graph, Swarm, A2A), memory management, interventions, and observability features introduced through v1.47.0.
+
+Google ADK support targets **v1.36.x** (latest maintained 1.x branch). Code generation produces valid Python with correct imports for LlmAgent, workflow agents, FunctionTool, MCPToolset, callbacks, and session management.
 
 ---
 

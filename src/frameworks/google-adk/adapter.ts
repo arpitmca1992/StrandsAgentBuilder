@@ -28,7 +28,7 @@ export const GoogleADKAdapter: FrameworkAdapter = {
   id: 'google-adk',
   name: 'Google ADK',
   description: 'Build agents with Google\'s Agent Development Kit. LlmAgent, workflow agents (Sequential, Parallel, Loop), Gemini-first.',
-  version: '1.28.0',
+  version: '1.36.1',
   docUrl: 'https://google.github.io/adk-docs/',
   features: ['Python', 'GCP', 'Gemini', 'Vertex AI', 'MCP', 'A2A', 'Callbacks'],
 

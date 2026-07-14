@@ -244,7 +244,7 @@ export function generateGraphCode(
 ): CodeGenerationResult {
   const imports = new Set<string>([
     'from strands import Agent, tool',
-    'from strands.models import BedrockModel',
+    'from strands.models.bedrock import BedrockModel',
     'from strands.multiagent import GraphBuilder',
     'from strands_tools import calculator, file_read, shell, current_time',
     'import json',

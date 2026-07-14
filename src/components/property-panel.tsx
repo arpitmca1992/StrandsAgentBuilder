@@ -1221,8 +1221,8 @@ export function PropertyPanel({
                   className="w-full px-2 py-1.5 text-xs border border-slate-200 rounded-md"
                 >
                   <option value="google_search">Google Search</option>
-                  <option value="code_execution">Code Execution</option>
                   <option value="vertex_ai_search">Vertex AI Search</option>
+                  <option value="google_maps_grounding">Google Maps Grounding</option>
                 </select>
               </div>
               <div className="p-2 bg-yellow-50 border border-yellow-100 rounded text-[10px] text-yellow-700">

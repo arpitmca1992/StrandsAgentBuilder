@@ -9,13 +9,13 @@ import { Wrench, X } from 'lucide-react';
 
 interface ADKBuiltinToolData {
   label?: string;
-  toolType?: 'google_search' | 'code_execution' | 'vertex_ai_search';
+  toolType?: 'google_search' | 'vertex_ai_search' | 'google_maps_grounding';
 }
 
 const BUILTIN_TOOLS = {
   google_search: { name: 'Google Search', import: 'from google.adk.tools import google_search' },
-  code_execution: { name: 'Code Execution', import: 'from google.adk.tools import code_execution' },
   vertex_ai_search: { name: 'Vertex AI Search', import: 'from google.adk.tools import vertex_ai_search' },
+  google_maps_grounding: { name: 'Google Maps Grounding', import: 'from google.adk.tools import google_maps_grounding' },
 };
 
 export function ADKBuiltinToolNode({ data, selected, id }: NodeProps) {

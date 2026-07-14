@@ -36,7 +36,7 @@ export function generateStrandsAgentCode(
   // Regular (non-graph) code generation
   const imports = new Set<string>([
     'from strands import Agent, tool',
-    'from strands.models import BedrockModel',
+    'from strands.models.bedrock import BedrockModel',
     'from strands_tools import calculator, file_read, shell, current_time, http_request, editor, retrieve, mem0_memory',
     'import json',
     'import os',
