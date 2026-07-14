@@ -102,9 +102,9 @@ logger = logging.getLogger(__name__)
 
 # FastAPI app
 app = FastAPI(
-    title="Strands UI Backend",
-    description="Backend API for Strands Agent visual builder",
-    version="1.0.0"
+    title="Agent Builder Studio — Backend",
+    description="Backend API for multi-framework visual agent builder (Strands + Google ADK)",
+    version="2.0.0"
 )
 
 # Request logging middleware
@@ -187,8 +187,10 @@ class ExecutionRequest(BaseModel):
     project_id: Optional[str] = "default-project"
     version: Optional[str] = "1.0.0"
     flow_data: Optional[dict] = None
+    framework: Optional[str] = "strands"  # 'strands' or 'google-adk'
     # API Keys for secure environment variable handling
     openai_api_key: Optional[str] = None
+    google_api_key: Optional[str] = None
 
 class ExecutionResult(BaseModel):
     success: bool
@@ -317,20 +319,25 @@ async def delete_project(project_id: str):
 # Code Execution Endpoints
 @app.post("/api/execute")
 async def execute_code(request: ExecutionRequest):
-    """Execute Python code with Strands Agent SDK"""
+    """Execute Python code — routes to Strands or ADK executor based on framework"""
     execution_id = str(uuid.uuid4())
     start_time = datetime.now()
     
-    logger.info(f"Starting code execution - ID: {execution_id}")
+    framework = request.framework or "strands"
+    logger.info(f"Starting code execution - ID: {execution_id}, Framework: {framework}")
     logger.debug(f"Code length: {len(request.code)} characters")
     
     if request.input_data:
         logger.debug(f"Input data provided: {type(request.input_data)}")
     
     try:
-        # Create execution environment
-        logger.info(f"Executing Strands code - ID: {execution_id}")
-        execution_result = await execute_strands_code(request.code, request.input_data, request.openai_api_key)
+        # Route to correct executor based on framework
+        if framework == "google-adk":
+            logger.info(f"Executing ADK code - ID: {execution_id}")
+            execution_result = await execute_adk_code(request.code, request.input_data, request.google_api_key)
+        else:
+            logger.info(f"Executing Strands code - ID: {execution_id}")
+            execution_result = await execute_strands_code(request.code, request.input_data, request.openai_api_key)
         
         end_time = datetime.now()
         execution_time = (end_time - start_time).total_seconds()
@@ -1629,6 +1636,133 @@ async def execute_strands_code(code: str, input_data: Optional[str] = None, open
             raise e
     except Exception as e:
         logger.error(f"Code execution exception: {e}")
+        raise e
+
+
+
+async def execute_adk_code(code: str, input_data: Optional[str] = None, google_api_key: Optional[str] = None) -> str:
+    """Execute Python code with Google ADK (Agent Development Kit) integration"""
+    logger.info("Starting execute_adk_code function")
+    logger.debug(f"Code length: {len(code)} characters")
+    
+    try:
+        # Set API keys as environment variables
+        if google_api_key:
+            os.environ["GOOGLE_API_KEY"] = google_api_key
+            logger.info("Google API key set in environment")
+        
+        # Build execution environment
+        adk_globals = {
+            '__builtins__': __builtins__,
+            'print': print,
+            'str': str,
+            'int': int,
+            'float': float,
+            'list': list,
+            'dict': dict,
+            'len': len,
+            'range': range,
+            'json': json,
+            'os': os,
+            'asyncio': asyncio,
+            'input_data': input_data,
+        }
+        
+        # Try to inject ADK imports into globals
+        try:
+            from google.adk.agents import LlmAgent, SequentialAgent, ParallelAgent, LoopAgent
+            from google.adk.models import Gemini
+            from google.adk.tools import FunctionTool, google_search
+            from google.adk.runners import Runner
+            from google.adk.sessions import InMemorySessionService
+            from google.genai import types
+            
+            adk_globals.update({
+                'LlmAgent': LlmAgent,
+                'SequentialAgent': SequentialAgent,
+                'ParallelAgent': ParallelAgent,
+                'LoopAgent': LoopAgent,
+                'Gemini': Gemini,
+                'FunctionTool': FunctionTool,
+                'google_search': google_search,
+                'Runner': Runner,
+                'InMemorySessionService': InMemorySessionService,
+                'types': types,
+            })
+            logger.info("ADK imports added to execution environment")
+        except ImportError as e:
+            logger.warning(f"Some ADK imports not available: {e}")
+        
+        # Try LiteLLM imports
+        try:
+            from google.adk.models import LiteLlm
+            adk_globals['LiteLlm'] = LiteLlm
+        except ImportError:
+            pass
+        
+        # Try MCP imports
+        try:
+            from google.adk.tools.mcp_tool import MCPToolset, SseConnectionParams, StdioConnectionParams
+            adk_globals.update({
+                'MCPToolset': MCPToolset,
+                'SseConnectionParams': SseConnectionParams,
+                'StdioConnectionParams': StdioConnectionParams,
+            })
+        except ImportError:
+            pass
+        
+        locals_dict = {}
+        
+        # Capture output
+        import io
+        import sys
+        output_buffer = io.StringIO()
+        old_stdout = sys.stdout
+        sys.stdout = output_buffer
+        
+        try:
+            logger.info("Executing ADK user code")
+            exec(code, adk_globals, locals_dict)
+            
+            # Make globals available to locals
+            for key, value in adk_globals.items():
+                if key not in locals_dict:
+                    locals_dict[key] = value
+            for key, value in locals_dict.items():
+                if key not in adk_globals:
+                    adk_globals[key] = value
+            
+            # If there's a main function, call it (ADK code uses async main)
+            if 'main' in locals_dict and callable(locals_dict['main']):
+                logger.info("Calling main function")
+                import inspect
+                if inspect.iscoroutinefunction(locals_dict['main']):
+                    logger.info("Main function is async, awaiting result")
+                    result = await locals_dict['main']()
+                else:
+                    logger.info("Main function is sync, calling directly")
+                    result = locals_dict['main']()
+                
+                if result is not None:
+                    logger.info(f"Main function returned: {type(result).__name__}")
+                    print(str(result))
+        
+        finally:
+            sys.stdout = old_stdout
+        
+        output = output_buffer.getvalue()
+        logger.info(f"ADK code execution completed, output length: {len(output)}")
+        return output if output else "Code executed successfully (no output)"
+        
+    except ImportError as e:
+        if "google.adk" in str(e) or "google.genai" in str(e):
+            logger.error(f"Google ADK import error: {e}")
+            return f"Google ADK not available. Install with: pip install google-adk\nError: {str(e)}"
+        else:
+            logger.error(f"Import error: {e}")
+            raise e
+    except Exception as e:
+        logger.error(f"ADK code execution exception: {e}")
         raise e
 
 # Storage API Endpoints

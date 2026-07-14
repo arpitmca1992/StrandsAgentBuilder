@@ -3,6 +3,7 @@ import { Play, Square, Loader, CheckCircle, XCircle, Clock, Terminal, Zap, Folde
 import { ChatModal } from './chat-modal';
 import { apiClient, type ExecutionRequest, type ExecutionResult, type ExecutionHistoryItem } from '../lib/api-client';
 import { ValidationError, isExecutionResult } from '../lib/validation';
+import { useFramework } from '../context/framework-context';
 
 interface ExecutionPanelProps {
   code: string;
@@ -39,6 +40,7 @@ export function ExecutionPanel({
   projectVersion = '1.0.0',
   flowData
 }: ExecutionPanelProps) {
+  const { framework } = useFramework();
   const [isExecuting, setIsExecuting] = useState(false);
   const [currentExecution, setCurrentExecution] = useState<ExecutionResult | null>(null);
   const [inputData, setInputData] = useState(() => getStoredInputData()); // Initialize from localStorage
@@ -318,6 +320,7 @@ export function ExecutionPanel({
       project_id: projectName,
       version: projectVersion,
       flow_data: flowData,
+      framework: framework?.id || 'strands',
       ...apiKeys,
     };
 

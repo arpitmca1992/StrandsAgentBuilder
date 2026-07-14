@@ -1,7 +1,7 @@
 [project]
-name = "backend"
-version = "0.1.0"
-description = "Add your description here"
+name = "agent-builder-studio-backend"
+version = "2.0.0"
+description = "Backend for Agent Builder Studio — multi-framework visual agent builder (Strands + Google ADK)"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
@@ -9,6 +9,8 @@ dependencies = [
     "strands-agents[openai]>=1.7.1",
     "strands-agents-tools[mem0_memory]",
     "strands-agents-tools>=0.2.6",
+    "google-adk>=1.36.0",
+    "google-genai>=1.0.0",
     "fastapi>=0.115.6",
     "uvicorn[standard]>=0.34.0",
     "websockets>=14.1",

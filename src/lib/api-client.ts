@@ -35,8 +35,10 @@ export interface ExecutionRequest {
   project_id?: string;
   version?: string;
   flow_data?: { nodes: Record<string, unknown>[]; edges: Record<string, unknown>[] };
+  framework?: string;  // 'strands' or 'google-adk'
   // API Keys for secure environment variable handling
   openai_api_key?: string;
+  google_api_key?: string;
 }
 
 export interface ExecutionResult {
