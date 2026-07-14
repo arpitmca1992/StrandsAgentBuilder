@@ -195,8 +195,26 @@ export function FlowEditor({
 
   const onConnect: OnConnect = useCallback(
     (params: Connection) => {
-      const validation = isValidConnection(params, nodes, edges, graphMode);
-      if (validation.valid) {
+      // Use framework-specific validation if available, fallback to Strands validator
+      let isValid = true;
+      let errorMessage = '';
+
+      if (framework?.id === 'google-adk') {
+        // ADK validation via adapter
+        const sourceNode = nodes.find(n => n.id === params.source);
+        const targetNode = nodes.find(n => n.id === params.target);
+        if (sourceNode && targetNode) {
+          isValid = framework.validateConnection(sourceNode, targetNode, params.sourceHandle, params.targetHandle);
+          if (!isValid) errorMessage = 'Invalid connection for this node type';
+        }
+      } else {
+        // Strands validation (existing)
+        const validation = isValidConnection(params, nodes, edges, graphMode);
+        isValid = validation.valid;
+        errorMessage = validation.message || 'Invalid connection';
+      }
+
+      if (isValid) {
         // Use framework adapter for edge labels
         let edgeLabel: string | undefined;
         const sourceNode = nodes.find(n => n.id === params.source);
@@ -223,19 +241,27 @@ export function FlowEditor({
         }, edges));
         setConnectionError(null);
       } else {
-        setConnectionError(validation.message || 'Invalid connection');
+        setConnectionError(errorMessage || 'Invalid connection');
         setTimeout(() => setConnectionError(null), 3000);
       }
     },
-    [setEdges, nodes, edges, graphMode]
+    [setEdges, nodes, edges, graphMode, framework, getEdgeLabel]
   );
 
   const isValidConnectionCallback = useCallback(
     (connection: Connection) => {
+      if (framework?.id === 'google-adk') {
+        const sourceNode = nodes.find(n => n.id === connection.source);
+        const targetNode = nodes.find(n => n.id === connection.target);
+        if (sourceNode && targetNode) {
+          return framework.validateConnection(sourceNode, targetNode, connection.sourceHandle, connection.targetHandle);
+        }
+        return true;
+      }
       const validation = isValidConnection(connection, nodes, edges, graphMode);
       return validation.valid;
     },
-    [nodes, edges, graphMode]
+    [nodes, edges, graphMode, framework]
   );
 
   const onNodeClick = useCallback(

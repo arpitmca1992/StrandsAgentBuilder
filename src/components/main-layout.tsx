@@ -12,14 +12,13 @@ import { InvokePanel } from './invoke-panel';
 import { ProjectManagerComponent } from './project-manager';
 import { ResizablePanel } from './resizable-panel';
 import { type StrandsProject, ProjectManager } from '../lib/project-manager';
-import { generateStrandsAgentCode } from '../lib/code-generator';
-import { useCodeGenerator } from '../frameworks/hooks';
-import { validateFlow, type ValidationIssue } from '../lib/flow-validator';
+import { useCodeGenerator, useFlowValidator } from '../frameworks/hooks';
+import type { ValidationIssue } from '../frameworks/types';
 import { showToast, ToastRenderer } from './ui/simple-toast';
 import { useUndoRedo } from '../lib/use-undo-redo';
 
 // Auto-save key for localStorage
-const AUTOSAVE_FLOW_KEY = 'strands_autosave_flow';
+const AUTOSAVE_FLOW_KEY = 'agent_studio_autosave_flow';
 
 // Helper functions for auto-save
 const saveFlowToAutoSave = (nodes: Node[], edges: Edge[], graphMode: boolean) => {
@@ -54,6 +53,7 @@ const clearAutoSavedFlow = () => {
 export function MainLayout() {
   const { framework, exitToSelector } = useFramework();
   const generateCode = useCodeGenerator();
+  const frameworkValidateFlow = useFlowValidator();
   const [selectedNode, setSelectedNode] = useState<Node | null>(null);
   const [nodes, setNodes] = useState<Node[]>([]);
   const [edges, setEdges] = useState<Edge[]>([]);
@@ -341,14 +341,16 @@ export function MainLayout() {
 
   // Compute validation status per node — used to show colored indicators on canvas
   const nodeValidationMap = (() => {
-    const issues = validateFlow(nodes, edges);
+    const issues = frameworkValidateFlow(nodes, edges);
     const map = new Map<string, 'error' | 'warning' | 'info'>();
     for (const issue of issues) {
       if (!issue.nodeId) continue;
+      // Framework uses 'type', Strands validator uses 'severity'
+      const severity = (issue as any).severity || (issue as any).type || 'info';
       const current = map.get(issue.nodeId);
       // Keep the worst severity
-      if (!current || issue.severity === 'error' || (issue.severity === 'warning' && current === 'info')) {
-        map.set(issue.nodeId, issue.severity);
+      if (!current || severity === 'error' || (severity === 'warning' && current === 'info')) {
+        map.set(issue.nodeId, severity);
       }
     }
     return map;

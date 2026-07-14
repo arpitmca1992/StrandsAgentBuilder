@@ -4,6 +4,7 @@ import { type Node, type Edge } from '@xyflow/react';
 import { Code, Download, Play, AlertCircle, Edit3, Save, X, CheckCircle2, AlertTriangle, Info } from 'lucide-react';
 import { getValidationSummary, type ValidationIssue } from '../lib/flow-validator';
 import { useCodeGenerator, useFlowValidator } from '../frameworks/hooks';
+import { useFramework } from '../context/framework-context';
 
 interface CodePanelProps {
   nodes: Node[];
@@ -14,6 +15,7 @@ interface CodePanelProps {
 }
 
 export function CodePanel({ nodes, edges, graphMode = false, className = '', onNavigateToNode }: CodePanelProps) {
+  const { framework } = useFramework();
   const generateCode = useCodeGenerator();
   const frameworkValidator = useFlowValidator();
   const [generatedCode, setGeneratedCode] = useState('');
@@ -79,7 +81,7 @@ export function CodePanel({ nodes, edges, graphMode = false, className = '', onN
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = 'strands_agent.py';
+    a.download = framework?.id === 'google-adk' ? 'adk_agent.py' : 'strands_agent.py';
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -139,7 +141,7 @@ export function CodePanel({ nodes, edges, graphMode = false, className = '', onN
               <button
                 onClick={handleDownload}
                 className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-md transition-colors"
-                title="Download as strands_agent.py"
+                title={`Download as ${framework?.id === 'google-adk' ? 'adk_agent.py' : 'strands_agent.py'}`}
               >
                 <Download className="w-3.5 h-3.5" />
               </button>
@@ -338,7 +340,7 @@ export function CodePanel({ nodes, edges, graphMode = false, className = '', onN
       {/* Footer Info */}
       <div className="p-3 bg-gray-50 border-t border-gray-200 text-xs text-gray-600">
         <div className="flex justify-between">
-          <span>Python • Strands Agent SDK</span>
+          <span>Python • {framework?.id === 'google-adk' ? 'Google ADK' : 'Strands Agents SDK'}</span>
           <span>{(isInEditMode ? editedCode : generatedCode).split('\n').length} lines</span>
         </div>
       </div>

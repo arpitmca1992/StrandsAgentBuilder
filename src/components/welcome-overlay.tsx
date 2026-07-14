@@ -13,7 +13,7 @@
 
 import { Bot, ArrowRight, Zap, X } from 'lucide-react';
 
-const WELCOME_DISMISSED_KEY = 'strands_studio_welcome_dismissed';
+const WELCOME_DISMISSED_KEY = 'agent_studio_welcome_dismissed';
 
 export function shouldShowWelcome(): boolean {
   try {
@@ -53,7 +53,7 @@ export function WelcomeOverlay({ onDismiss }: WelcomeOverlayProps) {
           >
             <X className="w-5 h-5" />
           </button>
-          <h2 className="text-2xl font-bold mb-2">Welcome to Strands Studio</h2>
+          <h2 className="text-2xl font-bold mb-2">Welcome to Agent Builder Studio</h2>
           <p className="text-blue-100 text-sm">
             Build AI agent workflows visually in 3 simple steps
           </p>
@@ -102,7 +102,7 @@ export function WelcomeOverlay({ onDismiss }: WelcomeOverlayProps) {
         <div className="px-6 py-4 bg-gray-50 border-t border-gray-100 flex items-center justify-between">
           <div className="flex items-center gap-2 text-xs text-gray-400">
             <Zap className="w-3.5 h-3.5" />
-            <span>Powered by Strands Agents SDK</span>
+            <span>Powered by Strands SDK & Google ADK</span>
           </div>
           <button
             onClick={handleDismiss}

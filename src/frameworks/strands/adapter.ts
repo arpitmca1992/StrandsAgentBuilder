@@ -112,7 +112,14 @@ export const StrandsAdapter: FrameworkAdapter = {
   },
 
   validateFlow(nodes: Node[], edges: Edge[]): ValidationIssue[] {
-    return validateFlow(nodes, edges);
+    const strandsIssues = validateFlow(nodes, edges);
+    // Map Strands format (severity/title/description) to framework format (type/message)
+    return strandsIssues.map(issue => ({
+      nodeId: issue.nodeId,
+      type: issue.severity as 'error' | 'warning' | 'info',
+      message: issue.title + (issue.description ? ': ' + issue.description : ''),
+      field: undefined,
+    }));
   },
 
   validateConnection(
