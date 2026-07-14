@@ -337,6 +337,10 @@ export class ProjectManager {
           localStorage.removeItem('current_strands_project');
         }
       }
+
+      // Also clean up old auto-save keys that might have stale data
+      localStorage.removeItem('strands_autosave_flow');
+      localStorage.removeItem('agent_studio_autosave_flow');
     } catch {
       // Ignore migration errors
     }

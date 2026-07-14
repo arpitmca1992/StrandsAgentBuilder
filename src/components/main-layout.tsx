@@ -17,22 +17,25 @@ import type { ValidationIssue } from '../frameworks/types';
 import { showToast, ToastRenderer } from './ui/simple-toast';
 import { useUndoRedo } from '../lib/use-undo-redo';
 
-// Auto-save key for localStorage
-const AUTOSAVE_FLOW_KEY = 'agent_studio_autosave_flow';
+// Auto-save key for localStorage (framework-namespaced)
+function getAutosaveKey(frameworkId?: string): string {
+  if (frameworkId === 'google-adk') return 'agent_studio_autosave_adk';
+  return 'agent_studio_autosave_strands';
+}
 
 // Helper functions for auto-save
-const saveFlowToAutoSave = (nodes: Node[], edges: Edge[], graphMode: boolean) => {
+const saveFlowToAutoSave = (nodes: Node[], edges: Edge[], graphMode: boolean, frameworkId?: string) => {
   try {
     const flowData = { nodes, edges, graphMode, timestamp: Date.now() };
-    localStorage.setItem(AUTOSAVE_FLOW_KEY, JSON.stringify(flowData));
+    localStorage.setItem(getAutosaveKey(frameworkId), JSON.stringify(flowData));
   } catch (error) {
     console.error('Failed to auto-save flow:', error);
   }
 };
 
-const loadFlowFromAutoSave = (): { nodes: Node[], edges: Edge[], graphMode?: boolean } | null => {
+const loadFlowFromAutoSave = (frameworkId?: string): { nodes: Node[], edges: Edge[], graphMode?: boolean } | null => {
   try {
-    const stored = localStorage.getItem(AUTOSAVE_FLOW_KEY);
+    const stored = localStorage.getItem(getAutosaveKey(frameworkId));
     if (!stored) return null;
     const flowData = JSON.parse(stored);
     return {
@@ -46,8 +49,8 @@ const loadFlowFromAutoSave = (): { nodes: Node[], edges: Edge[], graphMode?: boo
   }
 };
 
-const clearAutoSavedFlow = () => {
-  localStorage.removeItem(AUTOSAVE_FLOW_KEY);
+const clearAutoSavedFlow = (frameworkId?: string) => {
+  localStorage.removeItem(getAutosaveKey(frameworkId));
 };
 
 export function MainLayout() {
@@ -91,10 +94,10 @@ export function MainLayout() {
       setEdges(current.edges);
       setGraphMode(current.graphMode || false);
       setLastSaveTime(new Date(current.updatedAt));
-      clearAutoSavedFlow();
+      clearAutoSavedFlow(framework?.id);
     } else {
       // No current project, try to load auto-saved flow
-      const autoSaved = loadFlowFromAutoSave();
+      const autoSaved = loadFlowFromAutoSave(framework?.id);
       if (autoSaved) {
         setNodes(autoSaved.nodes);
         setEdges(autoSaved.edges);
@@ -116,14 +119,13 @@ export function MainLayout() {
   // Auto-save flow when nodes, edges, or graphMode change (only if no current project)
   useEffect(() => {
     if (!currentProject && (nodes.length > 0 || edges.length > 0)) {
-      // Debounce the auto-save to avoid too frequent localStorage writes
       const timer = setTimeout(() => {
-        saveFlowToAutoSave(nodes, edges, graphMode);
+        saveFlowToAutoSave(nodes, edges, graphMode, framework?.id);
       }, 500);
 
       return () => clearTimeout(timer);
     }
-  }, [nodes, edges, graphMode, currentProject]);
+  }, [nodes, edges, graphMode, currentProject, framework?.id]);
 
   // Listen for switch to execution panel event
   // Listen for switch to execution panel event
@@ -189,7 +191,7 @@ export function MainLayout() {
     setCurrentProject(project);
     setLastSaveTime(new Date(project.updatedAt)); // Set timestamp to project's last updated time
     // Clear auto-save since we now have a project loaded
-    clearAutoSavedFlow();
+    clearAutoSavedFlow(framework?.id);
   }, []);
 
   // Project management functions
@@ -260,7 +262,7 @@ export function MainLayout() {
     setNewProjectDescription('');
     setShowNewProjectDialog(false);
     // Clear auto-save since we now have a saved project
-    clearAutoSavedFlow();
+    clearAutoSavedFlow(framework?.id);
   }, [newProjectName, newProjectDescription, nodes, edges, graphMode]);
 
   const handleNewProject = useCallback(() => {
@@ -276,7 +278,7 @@ export function MainLayout() {
     setCurrentProject(null);
     setLastSaveTime(null);
     ProjectManager.clearCurrentProject();
-    clearAutoSavedFlow();
+    clearAutoSavedFlow(framework?.id);
     showToast('New project created', 'info');
   }, [nodes, edges]);
 
@@ -288,7 +290,7 @@ export function MainLayout() {
     setCurrentProject(null);
     setLastSaveTime(null);
     ProjectManager.clearCurrentProject();
-    clearAutoSavedFlow();
+    clearAutoSavedFlow(framework?.id);
     setShowConfirmNewProject(false);
     showToast('New project created', 'info');
   }, []);
@@ -323,7 +325,7 @@ export function MainLayout() {
         setEdges(imported.edges);
         setGraphMode(imported.graphMode || false);
         setLastSaveTime(new Date(imported.updatedAt));
-        clearAutoSavedFlow();
+        clearAutoSavedFlow(framework?.id);
         
       } else {
         

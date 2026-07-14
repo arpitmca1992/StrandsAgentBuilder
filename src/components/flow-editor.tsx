@@ -121,12 +121,15 @@ export function FlowEditor({
   const quickAddItems = framework?.id === 'google-adk' ? adkQuickAddItems : strandsQuickAddItems;
 
   // Merge framework node types with fallback (framework types take priority)
+  // CRITICAL: nodeTypes must be a stable reference for React Flow performance
   const nodeTypes = useMemo(() => {
-    if (Object.keys(frameworkNodeTypes).length > 0) {
+    if (framework?.id === 'google-adk') {
       return { ...fallbackNodeTypes, ...frameworkNodeTypes };
     }
+    // Strands or no framework — use fallback (which IS the Strands nodes)
     return fallbackNodeTypes;
-  }, [frameworkNodeTypes]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [framework?.id]);
 
   const [internalNodes, setInternalNodes, onInternalNodesChange]: [Node[], (nodes: Node[]) => void, OnNodesChange] = useNodesState(initialNodes);
   const [showShortcuts, setShowShortcuts] = useState(false);

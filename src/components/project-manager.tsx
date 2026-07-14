@@ -28,7 +28,7 @@ export function ProjectManagerComponent({
     loadTemplates();
     const current = ProjectManager.getCurrentProject();
     setCurrentProject(current);
-  }, []);
+  }, [framework?.id]);
 
   const loadProjects = () => {
     const allProjects = ProjectManager.getAllProjects();
