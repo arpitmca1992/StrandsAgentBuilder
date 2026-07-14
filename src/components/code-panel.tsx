@@ -43,8 +43,8 @@ export function CodePanel({ nodes, edges, graphMode = false, className = '', onN
       setFlowChangedWhileEditing(false);
     }
 
-    setErrors(result.errors);
-  }, [nodes, edges, graphMode, isInEditMode]);
+    setErrors([]);
+  }, [nodes, edges, graphMode, isInEditMode, generateCode, frameworkValidator]);
 
   const handleCodeChange = (value: string | undefined) => {
     if (value !== undefined && isInEditMode) {
