@@ -189,10 +189,14 @@ export function MainLayout() {
     setEdges(project.edges);
     setGraphMode(project.graphMode || false);
     setCurrentProject(project);
-    setLastSaveTime(new Date(project.updatedAt)); // Set timestamp to project's last updated time
-    // Clear auto-save since we now have a project loaded
+    setLastSaveTime(new Date(project.updatedAt));
     clearAutoSavedFlow(framework?.id);
-  }, []);
+
+    // Trigger fit-to-view after nodes are rendered
+    setTimeout(() => {
+      window.dispatchEvent(new CustomEvent('fitViewRequested'));
+    }, 100);
+  }, [framework?.id]);
 
   // Project management functions
   const handleSaveCurrentProject = useCallback(() => {

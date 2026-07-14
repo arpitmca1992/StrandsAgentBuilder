@@ -196,6 +196,20 @@ export function FlowEditor({
 
   const [reactFlowInstance, setReactFlowInstance] = React.useState<ReactFlowInstance | null>(null);
 
+  // Listen for fit-to-view requests (triggered when templates/projects are loaded)
+  React.useEffect(() => {
+    const handleFitView = () => {
+      if (reactFlowInstance) {
+        setTimeout(() => {
+          reactFlowInstance.fitView({ padding: 0.15, duration: 300 });
+        }, 50);
+      }
+    };
+
+    window.addEventListener('fitViewRequested', handleFitView);
+    return () => window.removeEventListener('fitViewRequested', handleFitView);
+  }, [reactFlowInstance]);
+
   const onConnect: OnConnect = useCallback(
     (params: Connection) => {
       // Use framework-specific validation if available, fallback to Strands validator
