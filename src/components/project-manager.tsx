@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { FolderOpen, Download, Trash2, X, BookOpen, Layers, Star } from 'lucide-react';
 import { ProjectManager, type StrandsProject } from '../lib/project-manager';
 import { fetchTemplates, fetchTemplateDetail, type TemplateListItem } from '../lib/templates-client';
+import { useFramework } from '../context/framework-context';
 import { showToast } from './ui/simple-toast';
 
 interface ProjectManagerComponentProps {
@@ -15,6 +16,7 @@ export function ProjectManagerComponent({
   onClose,
   className = ''
 }: ProjectManagerComponentProps) {
+  const { framework } = useFramework();
   const [projects, setProjects] = useState<StrandsProject[]>([]);
   const [templates, setTemplates] = useState<TemplateListItem[]>([]);
   const [currentProject, setCurrentProject] = useState<StrandsProject | null>(null);
@@ -35,7 +37,7 @@ export function ProjectManagerComponent({
 
   const loadTemplates = async () => {
     setLoadingTemplates(true);
-    const result = await fetchTemplates();
+    const result = await fetchTemplates({ framework: framework?.id });
     setTemplates(result);
     setLoadingTemplates(false);
   };

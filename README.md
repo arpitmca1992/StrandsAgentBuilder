@@ -18,7 +18,9 @@ A visual drag-and-drop interface for creating, configuring, and executing AI age
 
 ## ⭐ Highlights — Ready-to-Use Templates
 
-Start building immediately with **8 pre-built templates** from real-world patterns:
+Start building immediately with **16 pre-built templates** from real-world patterns:
+
+### Strands Agents SDK Templates (8)
 
 | Template | Pattern | Source | Features Used |
 |----------|---------|--------|---------------|
@@ -31,7 +33,20 @@ Start building immediately with **8 pre-built templates** from real-world patter
 | 🔍 **MCP Research Agent** | Single + MCP | [Strands MCP Docs](https://strandsagents.com/docs/user-guide/concepts/tools/mcp-tools/) | Multiple MCP servers, streaming |
 | 📋 **Data Analysis Workflow** | Workflow DAG | [Strands Workflow Docs](https://strandsagents.com/docs/user-guide/concepts/multi-agent/workflow/) | Task dependencies, parallel execution |
 
-Templates load from MySQL database via API. Click **Open → Templates** to use them.
+### Google ADK Templates (8)
+
+| Template | Pattern | Source | Features Used |
+|----------|---------|--------|---------------|
+| 🏭 **Production-Ready ADK Agent** | Single (Full) | [ADK Docs](https://google.github.io/adk-docs/agents/llm-agents/) | Callbacks, guardrails, FunctionTool, state, GenerateContentConfig |
+| 📝 **Research-Write-Review Pipeline** | Sequential | [ADK Docs](https://google.github.io/adk-docs/agents/workflow-agents/sequential-agent/) | 3-stage pipeline, output_key state passing |
+| ⇉ **Multi-Source Intelligence** | Parallel | [ADK Docs](https://google.github.io/adk-docs/agents/workflow-agents/parallel-agent/) | 4 concurrent agents, synthesis, output aggregation |
+| 🔄 **Writer-Reviewer Loop** | Loop | [ADK Docs](https://google.github.io/adk-docs/agents/workflow-agents/loop-agent/) | Iterative refinement, escalation, max iterations |
+| 🔍 **MCP Research Agent** | Single + MCP | [ADK Docs](https://google.github.io/adk-docs/tools-custom/mcp-tools/) | MCPToolset (stdio + SSE), FunctionTool, Google Search |
+| 🎯 **Customer Support Router** | Agent Routing | [ADK Docs](https://google.github.io/adk-docs/agents/llm-agents/) | sub_agents delegation, specialist routing |
+| 🏗️ **Nested Workflow** | Sequential + Parallel | [ADK Docs](https://google.github.io/adk-docs/agents/workflow-agents/) | Composable patterns, inner parallel stage |
+| 🛡️ **Callbacks & Guardrails** | Safety Pattern | [ADK Docs](https://google.github.io/adk-docs/callbacks/) | All 6 callbacks, PII detection, content filtering |
+
+Templates load from MySQL database via API, filtered by active framework. Click **Open → Templates** to use them.
 
 ---
 
@@ -158,6 +173,8 @@ Then run migrations in order:
 mysql -u root strands_builder < backend/db/migrations/001_create_templates_table.sql
 mysql -u root strands_builder < backend/db/migrations/002_seed_official_templates.sql
 mysql -u root strands_builder < backend/db/migrations/005_seed_rich_templates.sql
+mysql -u root strands_builder < backend/db/migrations/006_add_framework_column.sql
+mysql -u root strands_builder < backend/db/migrations/007_seed_rich_adk_templates.sql
 ```
 
 ---
